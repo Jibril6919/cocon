@@ -106,7 +106,9 @@
     border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 20px 60px -15px rgba(0,0,0,.6);
     transform:translateY(10px);opacity:0;transition:.25s;}
   .panel.open{display:flex;transform:translateY(0);opacity:1;}
-  .panel h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+  .panel h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:4px;padding-right:34px;}
+  .panel-x{position:absolute;top:13px;right:13px;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:rgba(243,233,218,.06);color:var(--cream);font-size:14px;line-height:1;display:grid;place-items:center;z-index:3;font-family:inherit;}
+  .panel-x:hover{background:rgba(243,233,218,.14);}
   .panel .ptxt{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5;}
 
   /* pomodoro panel */
@@ -274,6 +276,55 @@
   .rep-val{font-size:10px;color:var(--cream);font-weight:600;min-height:12px;}
   .rep-lab{font-size:11px;color:var(--muted);font-weight:600;}
   .rep-foot{font-size:11px;color:var(--muted);margin-top:14px;line-height:1.5;text-align:center;}
+  /* ---- classes (multi) ---- */
+  .mp-cancel{margin-top:8px;width:100%;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:10px;padding:8px;font-weight:600;font-size:12px;font-family:inherit;}
+  .cls-join-in{width:100%;background:rgba(243,233,218,.06);border:1px solid var(--line);border-radius:11px;padding:11px 12px;color:var(--cream);font-family:'Space Mono',monospace;font-weight:700;font-size:18px;letter-spacing:3px;text-align:center;text-transform:uppercase;outline:none;margin-bottom:8px;}
+  .cls-join-in:focus{border-color:var(--accent);}
+  .cls-code-row{display:flex;align-items:center;gap:10px;margin:6px 0 12px;}
+  .cls-code{flex:1;font-family:'Space Mono',monospace;font-weight:700;font-size:30px;letter-spacing:6px;color:var(--peach);text-align:center;background:rgba(240,168,120,.08);border:1px solid rgba(240,168,120,.25);border-radius:12px;padding:10px;}
+  .cls-copy{flex:none;border:1px solid var(--line);background:rgba(243,233,218,.06);color:var(--cream);border-radius:10px;padding:10px 12px;font-weight:600;font-size:12.5px;font-family:inherit;}
+  .cls-hint{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px;}
+  .cls-mem-h{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:600;margin-bottom:8px;}
+  .cls-members{display:flex;flex-direction:column;gap:6px;overflow-y:auto;max-height:34vh;margin-bottom:14px;}
+  .cls-mem{display:flex;align-items:center;gap:10px;background:rgba(243,233,218,.04);border:1px solid var(--line);border-radius:12px;padding:8px 10px;}
+  .cls-av{width:34px;height:34px;flex:none;border-radius:10px;overflow:hidden;background:var(--accent);color:#1a1226;display:grid;place-items:center;font-size:17px;}
+  .cls-av img{width:100%;height:100%;object-fit:cover;}
+  .cls-nm{flex:1;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cls-mic{font-size:14px;}
+  .cls-leave{width:100%;border:1px solid rgba(240,120,120,.4);background:rgba(240,120,120,.12);color:#f0a8a8;border-radius:12px;padding:11px;font-weight:700;font-size:13.5px;font-family:inherit;}
+  .cls-pill{position:fixed;left:max(14px,env(safe-area-inset-left));top:max(64px,calc(env(safe-area-inset-top) + 50px));z-index:26;display:none;align-items:center;gap:7px;background:var(--panel);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(240,168,120,.35);border-radius:999px;padding:7px 12px;font-size:12px;font-weight:600;color:var(--cream);}
+  .cls-pill.show{display:flex;}
+  .cls-pill .cls-dot{width:8px;height:8px;border-radius:50%;background:var(--peach);box-shadow:0 0 8px var(--peach);}
+  .cls-pill b{color:var(--peach);}
+  .msg-nm{font-size:10px;opacity:.7;margin-bottom:2px;font-weight:600;}
+  /* ---- classes v2 ---- */
+  .myclass{display:flex;align-items:center;gap:10px;}
+  .myclass .mc-ic{font-size:15px;}
+  .myclass .mc-nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .myclass .mc-code{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;}
+  .cls-srch-in{width:100%;background:rgba(243,233,218,.06);border:1px solid var(--line);border-radius:11px;padding:11px 12px;color:var(--cream);font-size:14px;outline:none;font-family:inherit;margin-bottom:8px;}
+  .cls-srch-in:focus{border-color:var(--accent);}
+  .srch-row{display:flex;gap:8px;}
+  .srch-row .cls-srch-in{margin-bottom:8px;flex:1;}
+  .srch-btn{flex:none;height:42px;width:46px;border:1px solid var(--line);background:rgba(243,233,218,.06);border-radius:11px;font-size:16px;}
+  .cr-toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--cream);margin:2px 0 8px;cursor:pointer;}
+  .cr-toggle input{width:16px;height:16px;accent-color:var(--accent);}
+  .search-results{display:flex;flex-direction:column;gap:6px;max-height:30vh;overflow-y:auto;margin-bottom:8px;}
+  .sr-row{display:flex;align-items:center;gap:9px;background:rgba(243,233,218,.05);border:1px solid var(--line);border-radius:11px;padding:8px 10px;}
+  .sr-ic{font-size:14px;}
+  .sr-nm{flex:1;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sr-join{flex:none;border:none;background:var(--peach);color:#1a1226;border-radius:9px;padding:7px 12px;font-weight:700;font-size:11.5px;font-family:inherit;}
+  .sr-empty{font-size:12px;color:var(--muted);text-align:center;padding:10px;}
+  .cls-b{font-size:13px;margin-left:2px;}
+  .cls-exit{width:100%;border:1px solid var(--line);background:rgba(243,233,218,.06);color:var(--cream);border-radius:12px;padding:11px;font-weight:700;font-size:13.5px;font-family:inherit;margin-bottom:8px;}
+  .cls-quit{width:100%;border:1px solid rgba(240,120,120,.4);background:rgba(240,120,120,.1);color:#f0a8a8;border-radius:12px;padding:10px;font-weight:600;font-size:12.5px;font-family:inherit;margin-bottom:8px;}
+  .cls-delete{width:100%;border:1px solid rgba(240,80,80,.5);background:rgba(240,80,80,.16);color:#ffb3b3;border-radius:12px;padding:10px;font-weight:700;font-size:12.5px;font-family:inherit;}
+  /* ---- vidéos distantes ---- */
+  .remote-stage{position:fixed;top:max(60px,calc(env(safe-area-inset-top) + 46px));left:50%;transform:translateX(-50%);z-index:24;display:none;gap:8px;max-width:calc(100vw - 20px);overflow-x:auto;padding:4px;}
+  .remote-stage.show{display:flex;}
+  .rv{position:relative;flex:none;width:158px;border-radius:13px;overflow:hidden;background:#000;border:1px solid var(--line);box-shadow:0 12px 34px -10px rgba(0,0,0,.65);}
+  .rv video{width:100%;display:block;background:#000;}
+  .rv small{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.62);color:#fff;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;max-width:85%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
   .scrim{position:fixed;inset:0;z-index:45;background:rgba(5,3,12,.5);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:.25s;}
   .scrim.show{opacity:1;pointer-events:auto;}
@@ -449,7 +500,7 @@
 
 <div class="panel" id="panel-chat">
   <h3>💬 Chat</h3>
-  <div class="chat-note">Salon local pour l'instant 🌙 Le chat entre plusieurs personnes arrive avec le multijoueur.</div>
+  <div class="chat-note" id="chatNote">Salon local 🌙 Rejoins une classe (menu ☰) pour discuter à plusieurs.</div>
   <div class="chat-msgs" id="chatMsgs"></div>
   <div class="add-row" style="margin-bottom:0"><input id="chatIn" placeholder="Écris un message…" maxlength="300"/><button id="chatSend"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1a1226" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>
 </div>
@@ -506,10 +557,23 @@
   <p class="rep-foot">Temps suivi automatiquement via le <b>Pomodoro (focus)</b> et le <b>Chrono</b>.</p>
 </div>
 
+<div class="panel" id="panel-class">
+  <h3>👥 <span id="clsName">Classe</span></h3>
+  <div class="cls-code-row"><span class="cls-code" id="clsCode">······</span><button class="cls-copy" id="clsCopy" type="button">Copier</button></div>
+  <div class="cls-hint">Partage ce code (ou le nom). 💬 chat, 🎙️ micro et 📷/🖥️ caméra-écran sont partagés avec la classe.</div>
+  <div class="cls-mem-h">Connectés (<span id="clsCount">1</span>)</div>
+  <div class="cls-members" id="clsMembers"></div>
+  <button class="cls-exit" id="clsExit" type="button">Sortir (revenir plus tard)</button>
+  <button class="cls-quit" id="clsQuit" type="button">Quitter définitivement</button>
+  <button class="cls-delete" id="clsDelete" type="button" style="display:none">Supprimer la classe</button>
+</div>
+
 <!-- PiP -->
 <div class="pip cam" id="camPip"><div class="bar"><small>Caméra</small><button id="camClose">×</button></div><video id="camVid" autoplay playsinline muted></video></div>
 <div class="pip" id="screenPip"><div class="bar"><small>Écran</small><button id="screenClose">×</button></div><video id="screenVid" autoplay playsinline muted></video></div>
 
+<div class="remote-stage" id="remoteStage"></div>
+<div class="cls-pill" id="clsPill"><span class="cls-dot"></span><span class="cls-txt">Classe</span> · <b id="clsPillN">1</b></div>
 <div class="mic-pill" id="micPill"><span class="mic-dot"></span><div class="mic-bars"><i></i><i></i><i></i><i></i></div><span class="mic-txt">Micro actif</span><button id="micPillOff" type="button">×</button></div>
 
 <!-- NAV DRAWER -->
@@ -547,12 +611,22 @@
   <div class="acc-actions"><button class="nav-btn-sm" id="menuSwitch" type="button">Changer de profil</button></div>
 
   <div class="nav-sec">Classes</div>
-  <button class="navrow" id="navCreate" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Créer une classe<span class="soon">bientôt</span></button>
-  <button class="navrow" id="navSearch" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>Rechercher des classes<span class="soon">bientôt</span></button>
+  <div id="myClassesList" style="display:none"></div>
+  <button class="navrow" id="navCreate" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Créer une classe</button>
+  <button class="navrow" id="navSearch" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>Rejoindre une classe</button>
+  <div class="mp-box" id="mpCreate">
+    <h4>Créer une classe</h4>
+    <input id="crName" maxlength="30" placeholder="Nom de la classe" class="cls-srch-in"/>
+    <label class="cr-toggle"><input type="checkbox" id="crPrivate"/> <span>Privée (avec mot de passe)</span></label>
+    <div id="crPassWrap" style="display:none"><input id="crPass" maxlength="40" placeholder="Mot de passe" class="cls-srch-in"/></div>
+    <button class="mp-x" id="crCreate" type="button">Créer la classe</button>
+    <button class="mp-cancel" id="crCancel" type="button">Annuler</button>
+  </div>
   <div class="mp-box" id="mpBox">
-    <h4>🔜 Les classes partagées arrivent</h4>
-    Créer/rejoindre une salle avec d'autres, chat, voix et caméra à plusieurs — c'est la prochaine grosse étape (le multijoueur), construite avec Supabase Realtime + WebRTC.
-    <button class="mp-x" id="mpClose" type="button">Compris</button>
+    <h4>Rejoindre une classe</h4>
+    <div class="srch-row"><input id="searchInput" placeholder="Nom de la classe…" class="cls-srch-in"/><button class="srch-btn" id="searchBtn" type="button">🔍</button></div>
+    <div class="search-results" id="searchResults"></div>
+    <button class="mp-cancel" id="mpClose" type="button">Fermer</button>
   </div>
 
   <div class="nav-sec">Mon espace</div>
@@ -637,7 +711,7 @@ const Store = {
 
 /* ===================== STATE ===================== */
 const DEF={ roomName:'', tom:0, dur:{focus:25,short:5,long:15}, longEvery:4, auto:false, chime:true,
-  ambVol:50, ytVol:70, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, studyLog:{} };
+  ambVol:50, ytVol:70, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, studyLog:{}, myClasses:[] };
 let S=JSON.parse(JSON.stringify(DEF));
 let mode='focus', running=false, remaining=1500, total=1500, ticker=null, focusDone=0;
 const PHASE={focus:'focus',short:'pause',long:'longue'};
@@ -673,6 +747,8 @@ function openPanel(name){
   $('panel-'+name).classList.add('open'); activePanel=name;
   if(name==='report'&&typeof renderReport==='function') renderReport();
 }
+function closePanelEl(p){ if(!p)return; p.classList.remove('open'); const name=p.id.replace('panel-',''); if(activePanel===name)activePanel=null; document.querySelectorAll('.dbtn[data-panel="'+name+'"]').forEach(d=>d.classList.remove('active')); }
+document.querySelectorAll('.panel').forEach(p=>{ const b=document.createElement('button'); b.className='panel-x'; b.type='button'; b.setAttribute('aria-label','Fermer'); b.textContent='✕'; b.onclick=()=>closePanelEl(p); p.appendChild(b); });
 document.querySelectorAll('.dbtn[data-panel]').forEach(b=> b.onclick=()=>openPanel(b.dataset.panel));
 
 /* ===================== POMODORO ===================== */
@@ -815,17 +891,18 @@ $('ytVol').oninput=e=>{S.ytVol=+e.target.value;if(ytReady&&ytPlayer)ytPlayer.set
 /* ===================== CAMERA + SCREEN SHARE (aperçu local) ===================== */
 let camStream=null,screenStream=null;
 async function toggleCam(){
-  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; $('camPip').classList.remove('show'); $('camBtn').classList.remove('active','live'); return; }
+  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; $('camPip').classList.remove('show'); $('camBtn').classList.remove('active','live'); if(typeof updateShareToMesh==='function')updateShareToMesh(); return; }
   try{ camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
-    $('camVid').srcObject=camStream; $('camPip').classList.add('show'); $('camBtn').classList.add('active','live'); placePip($('camPip'),'br'); }
+    $('camVid').srcObject=camStream; $('camPip').classList.add('show'); $('camBtn').classList.add('active','live'); placePip($('camPip'),'br'); if(typeof updateShareToMesh==='function')updateShareToMesh(); if(typeof inClass!=='undefined'&&inClass)flash('Caméra partagée avec la classe 📷'); }
   catch(e){ flash('Caméra refusée ou indisponible'); }
 }
 async function toggleScreen(){
-  if(screenStream){ screenStream.getTracks().forEach(t=>t.stop()); screenStream=null; $('screenPip').classList.remove('show'); $('screenBtn').classList.remove('active','live'); return; }
+  if(screenStream){ screenStream.getTracks().forEach(t=>t.stop()); screenStream=null; $('screenPip').classList.remove('show'); $('screenBtn').classList.remove('active','live'); if(typeof updateShareToMesh==='function')updateShareToMesh(); return; }
   if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){ flash('Partage d\'écran non dispo sur ce navigateur'); return; }
   try{ screenStream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
     $('screenVid').srcObject=screenStream; $('screenPip').classList.add('show'); $('screenBtn').classList.add('active','live'); placePip($('screenPip'),'tr');
-    screenStream.getVideoTracks()[0].onended=()=>{ screenStream=null; $('screenPip').classList.remove('show'); $('screenBtn').classList.remove('active','live'); }; }
+    screenStream.getVideoTracks()[0].onended=()=>{ screenStream=null; $('screenPip').classList.remove('show'); $('screenBtn').classList.remove('active','live'); if(typeof updateShareToMesh==='function')updateShareToMesh(); };
+    if(typeof updateShareToMesh==='function')updateShareToMesh(); if(typeof inClass!=='undefined'&&inClass)flash('Écran partagé avec la classe 🖥️'); }
   catch(e){ if(e&&e.name!=='NotAllowedError') flash('Partage impossible'); }
 }
 $('camBtn').onclick=toggleCam; $('screenBtn').onclick=toggleScreen;
@@ -858,9 +935,171 @@ function clearChat(){ if(!Array.isArray(S.chat)) S.chat=[]; else if(S.chat.lengt
 $('taskAdd').onclick=addTask; $('taskIn').onkeydown=e=>{if(e.key==='Enter')addTask();};
 
 /* ===================== CHAT (local, prêt pour le multi) ===================== */
-function renderChat(){ const c=$('chatMsgs'); c.innerHTML=''; S.chat.forEach(m=>{ const el=document.createElement('div'); el.className='msg '+(m.me?'me':'them'); el.textContent=m.text; c.appendChild(el); }); c.scrollTop=c.scrollHeight; }
-function sendChat(){ const v=$('chatIn').value.trim(); if(!v)return; S.chat.push({text:v,me:true,t:Date.now()}); if(S.chat.length>200)S.chat=S.chat.slice(-200); $('chatIn').value=''; save(); renderChat(); }
+function renderChat(){ const c=$('chatMsgs'); c.innerHTML=''; S.chat.forEach(m=>{ const el=document.createElement('div'); el.className='msg '+(m.me?'me':'them'); if(!m.me&&m.name){ const nm=document.createElement('div'); nm.className='msg-nm'; nm.textContent=m.name; el.appendChild(nm); } el.appendChild(document.createTextNode(m.text)); c.appendChild(el); }); c.scrollTop=c.scrollHeight; }
+function sendChat(){ const v=$('chatIn').value.trim(); if(!v)return; $('chatIn').value='';
+  if(typeof inClass!=='undefined'&&inClass){ S.chat.push({text:v,me:true}); if(S.chat.length>200)S.chat=S.chat.slice(-200); renderChat(); if(classCh) classCh.send({type:'broadcast',event:'chat',payload:{text:v,name:myName()}}); return; }
+  S.chat.push({text:v,me:true,t:Date.now()}); if(S.chat.length>200)S.chat=S.chat.slice(-200); save(); renderChat(); }
 $('chatSend').onclick=sendChat; $('chatIn').onkeydown=e=>{if(e.key==='Enter')sendChat();};
+
+/* ===================== CLASSES (multi : Supabase Realtime + WebRTC) ===================== */
+let sbRT=null, classCh=null, inClass=false, classCode='', className='', classIsPublic=true, classCreator=false, myPid='';
+const peers={}; let voiceStream=null, shareKind=null;
+const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
+function hashStr(s){ let h=5381; s=String(s); for(let i=0;i<s.length;i++){ h=((h<<5)+h)^s.charCodeAt(i); } return (h>>>0).toString(36); }
+function myName(){ return (S.profName||'').trim() || ((cloudMode&&cloudUser&&cloudUser.email)?cloudUser.email.split('@')[0]:'Invité'); }
+function myEmoji(){ return (cloudMode&&cloudUser)?'☁️':(((profiles||[]).find(x=>x.id===activeId)||{emoji:'🌙'}).emoji||'🌙'); }
+function myUid(){ return (cloudMode&&cloudUser&&cloudUser.id)||('local-'+(activeId||'x')); }
+function genCode(){ const a='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let s=''; for(let i=0;i<6;i++) s+=a[Math.floor(Math.random()*a.length)]; return s; }
+async function ensureRT(){ if(sbRT) return sbRT; const m=await import('https://esm.sh/@supabase/supabase-js@2'); sbRT=m.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false}}); return sbRT; }
+
+/* --- mes classes (persistées, re-entrée sans recherche) --- */
+function myClasses(){ if(!S) return []; if(!Array.isArray(S.myClasses)) S.myClasses=[]; return S.myClasses; }
+function addMyClass(c){ const l=myClasses(); const ex=l.find(x=>x.code===c.code); if(ex){ ex.name=c.name; ex.isPublic=c.isPublic; ex.creator=!!c.creator; } else { l.push({code:c.code,name:c.name,isPublic:c.isPublic,creator:!!c.creator}); } save(); renderMyClasses(); }
+function removeMyClass(code){ S.myClasses=myClasses().filter(x=>x.code!==code); save(); renderMyClasses(); }
+function renderMyClasses(){ const box=$('myClassesList'); if(!box)return; const l=myClasses(); box.innerHTML='';
+  if(!l.length){ box.style.display='none'; return; } box.style.display='block';
+  l.forEach(c=>{ const b=document.createElement('button'); b.className='navrow myclass'; b.type='button';
+    b.innerHTML='<span class="mc-ic">'+(c.isPublic?'🌐':'🔒')+'</span><span class="mc-nm">'+(c.name||c.code)+'</span><span class="mc-code">'+c.code+'</span>';
+    b.onclick=()=>{ closeDrawer(); openPanel('class'); classEnter(c.code,c.name,c.isPublic,c.creator); };
+    box.appendChild(b); }); }
+
+/* --- création / recherche (table Supabase via REST anon) --- */
+async function classCreate(name,isPublic,pass){
+  name=(name||'').trim(); if(name.length<2){ flash('Donne un nom (2 caractères min)'); return; }
+  if(!isPublic && (pass||'').length<1){ flash('Mets un mot de passe pour une classe privée'); return; }
+  const code=genCode();
+  const row={code,name,is_public:!!isPublic,pass:(isPublic?null:hashStr(pass||'')),creator:myUid()};
+  flash('Création…');
+  try{ const r=await sbFetch('/rest/v1/classes',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(row)});
+    if(!r.ok){ const t=await r.text().catch(()=>''); flash((t.indexOf('does not exist')>=0||t.indexOf('relation')>=0)?'Table « classes » manquante (voir SQL)':'Création impossible'); return; }
+  }catch(e){ flash('Création impossible (réseau)'); return; }
+  closeDrawer(); openPanel('class'); classEnter(code,name,!!isPublic,true);
+}
+async function classSearch(term){
+  term=(term||'').trim(); const box=$('searchResults'); if(box) box.innerHTML='<div class="sr-empty">Recherche…</div>';
+  let rows=[]; try{ const q=term?('name=ilike.*'+encodeURIComponent(term)+'*&'):''; const r=await sbFetch('/rest/v1/classes?'+q+'select=code,name,is_public&order=created_at.desc&limit=30'); if(r.ok) rows=await r.json().catch(()=>[]); }catch(e){}
+  if(!box) return;
+  if(!rows.length){ box.innerHTML='<div class="sr-empty">Aucune classe trouvée.</div>'; return; }
+  box.innerHTML='';
+  rows.forEach(c=>{ const el=document.createElement('div'); el.className='sr-row';
+    el.innerHTML='<span class="sr-ic">'+(c.is_public?'🌐':'🔒')+'</span><span class="sr-nm">'+c.name+'</span><button class="sr-join" type="button">Rejoindre</button>';
+    el.querySelector('.sr-join').onclick=()=>joinFromSearch(c);
+    box.appendChild(el); });
+}
+async function joinFromSearch(c){
+  if(c.is_public){ $('mpBox').classList.remove('open'); closeDrawer(); openPanel('class'); classEnter(c.code,c.name,true,false); return; }
+  const pw=prompt('Mot de passe pour « '+c.name+' »'); if(pw===null) return;
+  try{ const r=await sbFetch('/rest/v1/classes?code=eq.'+encodeURIComponent(c.code)+'&select=pass'); const a=await r.json().catch(()=>[]); const stored=(a&&a[0])?a[0].pass:null;
+    if(stored && hashStr(pw)===stored){ $('mpBox').classList.remove('open'); closeDrawer(); openPanel('class'); classEnter(c.code,c.name,false,false); }
+    else flash('Mot de passe incorrect'); }catch(e){ flash('Erreur de connexion'); }
+}
+
+/* --- entrer / sortir / quitter / supprimer --- */
+async function classEnter(code,name,isPublic,creator){
+  code=(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8); if(code.length<4){ flash('Code invalide'); return; }
+  if(inClass) await classLeaveCh();
+  flash('Connexion à la classe…');
+  let rt; try{ rt=await ensureRT(); }catch(e){ flash('Temps-réel indisponible (réseau ?)'); return; }
+  myPid=myUid()+'-'+Math.random().toString(36).slice(2,7);
+  classCode=code; className=name||code; classIsPublic=isPublic!==false; classCreator=!!creator;
+  if($('clsCode')) $('clsCode').textContent=code; if($('clsName')) $('clsName').textContent=className;
+  if($('clsDelete')) $('clsDelete').style.display=classCreator?'block':'none';
+  const ch=rt.channel('class:'+code,{config:{presence:{key:myPid},broadcast:{self:false}}}); classCh=ch;
+  ch.on('presence',{event:'sync'},()=>{ presenceList().forEach(p=>{ if(p.pid&&p.pid!==myPid) makePeer(p.pid); }); renderMembers(); });
+  ch.on('presence',{event:'join'},({newPresences})=>{ (newPresences||[]).forEach(p=>{ if(p.pid&&p.pid!==myPid) makePeer(p.pid); }); renderMembers(); });
+  ch.on('presence',{event:'leave'},({leftPresences})=>{ (leftPresences||[]).forEach(p=>{ if(p.pid){ closePeer(p.pid); removeRemoteTile(p.pid); } }); renderMembers(); });
+  ch.on('broadcast',{event:'chat'},({payload})=>onClassChat(payload));
+  ch.on('broadcast',{event:'signal'},({payload})=>onSignal(payload));
+  ch.subscribe(async (st)=>{ if(st==='SUBSCRIBED'){ inClass=true; await ch.track(myPresence()); onClassEntered(); } else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){ flash('Connexion classe échouée'); } });
+  addMyClass({code,name:className,isPublic:classIsPublic,creator:classCreator});
+}
+async function classLeaveCh(){ classVoiceOff(); stopShareToMesh(); for(const pid in peers){ removeRemoteTile(pid); closePeer(pid); }
+  if(classCh){ try{ await classCh.unsubscribe(); }catch(e){} try{ sbRT&&sbRT.removeChannel(classCh); }catch(e){} classCh=null; }
+  inClass=false; }
+async function classExit(){ await classLeaveCh(); classCode=''; onClassLeft(); flash('Tu es sorti (tu peux revenir quand tu veux)'); }
+async function classQuit(){ const c=classCode; await classLeaveCh(); removeMyClass(c); classCode=''; onClassLeft(); flash('Classe quittée définitivement'); }
+async function classDelete(){ if(!classCreator){ flash('Seul le créateur peut supprimer'); return; } const c=classCode;
+  if(!confirm('Supprimer définitivement la classe « '+className+' » pour tout le monde ?')) return;
+  try{ await sbFetch('/rest/v1/classes?code=eq.'+encodeURIComponent(c),{method:'DELETE',headers:{Prefer:'return=minimal'}}); }catch(e){}
+  await classLeaveCh(); removeMyClass(c); classCode=''; onClassLeft(); flash('Classe supprimée'); }
+
+function myPresence(){ return {pid:myPid,name:myName(),emoji:myEmoji(),photo:(S.profPhoto||''),mic:!!voiceStream,vid:shareKind}; }
+function presenceUpdate(){ if(classCh&&inClass){ try{ classCh.track(myPresence()); }catch(e){} } renderMembers(); }
+function onClassEntered(){ S.chat=[]; renderChat(); updateChatNote(); renderMembers(); if($('clsPill'))$('clsPill').classList.add('show'); flash('Dans « '+className+' » 👥'); }
+function onClassLeft(){ if($('clsPill'))$('clsPill').classList.remove('show'); S.chat=[]; renderChat(); updateChatNote(); if(activePanel==='class') closePanelEl($('panel-class')); var st=$('remoteStage'); if(st) st.classList.remove('show'); }
+function presenceList(){ let list=[]; try{ const ps=classCh?classCh.presenceState():{}; Object.keys(ps).forEach(k=>{ const p=(ps[k]&&ps[k][0])||{}; list.push(p); }); }catch(e){} if(!list.length&&inClass) list.push(myPresence()); return list; }
+function nameOf(pid){ const p=presenceList().find(x=>x.pid===pid); return p?(p.name||'Invité'):'Invité'; }
+function renderMembers(){ const box=$('clsMembers'); const list=presenceList();
+  if($('clsCount')) $('clsCount').textContent=list.length; if($('clsPillN')) $('clsPillN').textContent=list.length;
+  list.forEach(p=>{ updateTileLabel(p.pid, p.name); });
+  if(!box)return; box.innerHTML='';
+  list.forEach(p=>{ const el=document.createElement('div'); el.className='cls-mem';
+    const av=p.photo?('<img src="'+p.photo+'" alt=""/>'):('<span>'+(p.emoji||'🌙')+'</span>');
+    let b=''; if(p.mic)b+='<span class="cls-b">🎙️</span>'; if(p.vid==='cam')b+='<span class="cls-b">📷</span>'; if(p.vid==='screen')b+='<span class="cls-b">🖥️</span>';
+    el.innerHTML='<div class="cls-av">'+av+'</div><div class="cls-nm">'+((p.pid===myPid)?(myName()+' (toi)'):(p.name||'Invité'))+'</div>'+b;
+    box.appendChild(el); }); }
+function onClassChat(p){ if(!p)return; S.chat.push({text:p.text,me:false,name:p.name||'Invité'}); if(S.chat.length>200)S.chat=S.chat.slice(-200); renderChat(); }
+function updateChatNote(){ const n=$('chatNote'); if(!n)return; n.textContent = inClass ? ('Chat de « '+className+' » — visible par tous les connectés 👥') : 'Salon local 🌙 Rejoins une classe (menu ☰) pour discuter à plusieurs.'; }
+
+/* ---- WebRTC mesh (audio + vidéo, perfect negotiation) ---- */
+function sig(to,data){ if(classCh) classCh.send({type:'broadcast',event:'signal',payload:Object.assign({from:myPid,to:to},data)}); }
+function currentShareTrack(){ if(screenStream) return screenStream.getVideoTracks()[0]||null; if(camStream) return camStream.getVideoTracks()[0]||null; return null; }
+function makePeer(pid){ if(peers[pid]) return peers[pid];
+  const pc=new RTCPeerConnection(ICE); const P={pc,makingOffer:false,polite:(myPid<pid),ignoreOffer:false,audioEl:null,vSender:null,aSender:null}; peers[pid]=P;
+  if(voiceStream) voiceStream.getTracks().forEach(t=>{ try{ P.aSender=pc.addTrack(t,voiceStream); }catch(e){} });
+  const vt=currentShareTrack(); if(vt){ const ms=screenStream||camStream; try{ P.vSender=pc.addTrack(vt,ms); }catch(e){} }
+  pc.onicecandidate=e=>{ if(e.candidate) sig(pid,{kind:'ice',candidate:e.candidate}); };
+  pc.ontrack=e=>{ const tr=e.track; if(tr.kind==='audio'){ let a=P.audioEl; if(!a){a=new Audio();a.autoplay=true;a.playsInline=true;P.audioEl=a;} a.srcObject=e.streams[0]; a.play().catch(()=>{}); }
+    else if(tr.kind==='video'){ addRemoteTile(pid,e.streams[0]); tr.onended=()=>removeRemoteTile(pid); } };
+  pc.onnegotiationneeded=async ()=>{ try{ P.makingOffer=true; await pc.setLocalDescription(); sig(pid,{kind:'desc',desc:pc.localDescription}); }catch(e){} finally{ P.makingOffer=false; } };
+  return P; }
+async function onSignal(m){ if(!m||m.to!==myPid)return; const pid=m.from; const P=makePeer(pid); const pc=P.pc;
+  try{ if(m.kind==='desc'){ const desc=m.desc; const collision=desc.type==='offer'&&(P.makingOffer||pc.signalingState!=='stable');
+      P.ignoreOffer=!P.polite&&collision; if(P.ignoreOffer)return;
+      await pc.setRemoteDescription(desc);
+      if(desc.type==='offer'){ await pc.setLocalDescription(); sig(pid,{kind:'desc',desc:pc.localDescription}); } }
+    else if(m.kind==='ice'&&m.candidate){ try{ await pc.addIceCandidate(m.candidate); }catch(e){} } }catch(e){} }
+function closePeer(pid){ const P=peers[pid]; if(!P)return; try{P.pc.close();}catch(e){} if(P.audioEl){try{P.audioEl.srcObject=null;}catch(e){}} delete peers[pid]; }
+
+/* ---- voix ---- */
+async function classVoiceToggle(){ if(voiceStream){ classVoiceOff(); } else { await classVoiceOn(); } }
+async function classVoiceOn(){ if(!inClass){ flash('Rejoins une classe d’abord'); return; }
+  try{ voiceStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false}); }catch(e){ flash('Micro refusé'); return; }
+  for(const pid in peers){ voiceStream.getTracks().forEach(t=>{ try{ peers[pid].aSender=peers[pid].pc.addTrack(t,voiceStream); }catch(e){} }); }
+  startMicMeter(voiceStream,'🎙️ En classe'); presenceUpdate(); flash('Micro ouvert dans la classe 🎙️'); }
+function classVoiceOff(){ if(voiceStream){ for(const pid in peers){ const P=peers[pid]; if(P.aSender){ try{P.pc.removeTrack(P.aSender);}catch(e){} P.aSender=null; } } voiceStream.getTracks().forEach(t=>t.stop()); voiceStream=null; } stopMicMeter(); presenceUpdate(); }
+
+/* ---- partage vidéo (caméra/écran) vers la classe ---- */
+function updateShareToMesh(){ if(!inClass) return; const tr=currentShareTrack(); shareKind = screenStream?'screen':(camStream?'cam':null); const ms=screenStream||camStream;
+  for(const pid in peers){ const P=peers[pid];
+    if(tr){ if(P.vSender){ try{P.vSender.replaceTrack(tr);}catch(e){} } else { try{ P.vSender=P.pc.addTrack(tr,ms); }catch(e){} } }
+    else { if(P.vSender){ try{P.pc.removeTrack(P.vSender);}catch(e){} P.vSender=null; } } }
+  presenceUpdate(); }
+function stopShareToMesh(){ for(const pid in peers){ const P=peers[pid]; if(P.vSender){ try{P.pc.removeTrack(P.vSender);}catch(e){} P.vSender=null; } } shareKind=null; }
+
+/* ---- tuiles vidéo distantes (avec nom) ---- */
+function addRemoteTile(pid,stream){ const stage=$('remoteStage'); if(!stage)return; let t=document.getElementById('rv-'+pid);
+  if(!t){ t=document.createElement('div'); t.className='rv'; t.id='rv-'+pid; t.innerHTML='<video autoplay playsinline></video><small></small>'; stage.appendChild(t); }
+  const v=t.querySelector('video'); v.srcObject=stream; if(v.play) v.play().catch(()=>{});
+  updateTileLabel(pid, nameOf(pid)); stage.classList.add('show'); }
+function removeRemoteTile(pid){ const t=document.getElementById('rv-'+pid); if(t) t.remove(); const stage=$('remoteStage'); if(stage&&!stage.children.length) stage.classList.remove('show'); }
+function updateTileLabel(pid,name){ const t=document.getElementById('rv-'+pid); if(t){ const s=t.querySelector('small'); if(s) s.textContent=name||'Invité'; } }
+
+/* ---- menu / boutons ---- */
+if($('navCreate')) $('navCreate').onclick=()=>{ $('mpCreate').classList.add('open'); };
+if($('navSearch')) $('navSearch').onclick=()=>{ $('mpBox').classList.add('open'); if($('searchInput'))$('searchInput').focus(); classSearch(''); };
+if($('searchBtn')) $('searchBtn').onclick=()=>classSearch($('searchInput').value);
+if($('searchInput')) $('searchInput').oninput=()=>{ clearTimeout(window._srT); window._srT=setTimeout(()=>classSearch($('searchInput').value),350); };
+if($('mpClose')) $('mpClose').onclick=()=>$('mpBox').classList.remove('open');
+if($('crPrivate')) $('crPrivate').onchange=()=>{ $('crPassWrap').style.display=$('crPrivate').checked?'block':'none'; };
+if($('crCreate')) $('crCreate').onclick=()=>{ const n=$('crName').value; const pub=!$('crPrivate').checked; const pw=$('crPass').value; $('mpCreate').classList.remove('open'); classCreate(n,pub,pw); };
+if($('crCancel')) $('crCancel').onclick=()=>$('mpCreate').classList.remove('open');
+if($('clsExit')) $('clsExit').onclick=()=>classExit();
+if($('clsQuit')) $('clsQuit').onclick=()=>classQuit();
+if($('clsDelete')) $('clsDelete').onclick=()=>classDelete();
+if($('clsCopy')) $('clsCopy').onclick=async ()=>{ try{ await navigator.clipboard.writeText(classCode); flash('Code copié ✓'); }catch(e){ flash('Code : '+classCode); } };
+if($('clsPill')) $('clsPill').onclick=()=>openPanel('class');
+renderMyClasses();
 
 /* ===================== BACKGROUND (fix import mobile) ===================== */
 function applyImg(data){ if(data){ $('imgBg').style.backgroundImage=`url("${data}")`; document.body.dataset.img='on'; } else { $('imgBg').style.backgroundImage=''; document.body.dataset.img='off'; } }
@@ -925,7 +1164,7 @@ $('roomName').oninput=()=>{S.roomName=$('roomName').value;save();};
 /* ===================== MENU (drawer gauche) + MICRO ===================== */
 let menuEmoji='🌙';
 function closeDrawer(){ $('drawer').classList.remove('open'); $('scrim').classList.remove('show'); }
-function openDrawer(){ renderMenuAccount(); $('drawer').classList.add('open'); $('scrim').classList.add('show'); }
+function openDrawer(){ renderMenuAccount(); if(typeof renderMyClasses==='function')renderMyClasses(); $('drawer').classList.add('open'); $('scrim').classList.add('show'); }
 function renderMenuAccount(){
   const cloud=!!(cloudMode&&cloudUser);
   const photo=S.profPhoto||'';
@@ -973,19 +1212,23 @@ if($('mpClose')) $('mpClose').onclick=()=> $('mpBox').classList.remove('open');
 
 /* micro (aperçu local, prêt pour la voix en classe) */
 let micStream=null, micAnalyser=null, micRAF=null, micSrcNode=null;
+function startMicMeter(stream,label){ resumeCtx(); const c=ctx(); micSrcNode=c.createMediaStreamSource(stream); micAnalyser=c.createAnalyser(); micAnalyser.fftSize=256; micSrcNode.connect(micAnalyser);
+  const data=new Uint8Array(micAnalyser.frequencyBinCount); const bars=$('micPill').querySelectorAll('.mic-bars i'); const txt=$('micPill').querySelector('.mic-txt'); if(txt)txt.textContent=label||'Micro actif';
+  $('micBtn').classList.add('active','live'); $('micPill').classList.add('show');
+  (function loop(){ if(!micAnalyser)return; micAnalyser.getByteFrequencyData(data); let s=0; for(let i=0;i<data.length;i++)s+=data[i]; const lvl=Math.min(1,(s/data.length)/80);
+    bars.forEach(b=>{ b.style.transform='scaleY('+Math.max(.15,Math.min(1,lvl*(.5+Math.random())))+')'; });
+    micRAF=requestAnimationFrame(loop); })(); }
+function stopMicMeter(){ if(micRAF){cancelAnimationFrame(micRAF);micRAF=null;} micAnalyser=null; if(micSrcNode){try{micSrcNode.disconnect();}catch(e){}micSrcNode=null;} if($('micBtn'))$('micBtn').classList.remove('active','live'); if($('micPill'))$('micPill').classList.remove('show'); }
 async function toggleMic(){ if(micStream){ micOff(); return; }
   try{ micStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
-    $('micBtn').classList.add('active','live'); $('micPill').classList.add('show'); resumeCtx();
-    const c=ctx(); micSrcNode=c.createMediaStreamSource(micStream); micAnalyser=c.createAnalyser(); micAnalyser.fftSize=256; micSrcNode.connect(micAnalyser);
-    const data=new Uint8Array(micAnalyser.frequencyBinCount); const bars=$('micPill').querySelectorAll('.mic-bars i');
-    (function loop(){ if(!micAnalyser)return; micAnalyser.getByteFrequencyData(data); let s=0; for(let i=0;i<data.length;i++)s+=data[i]; const lvl=Math.min(1,(s/data.length)/80);
-      bars.forEach(b=>{ b.style.transform='scaleY('+Math.max(.15,Math.min(1,lvl*(.5+Math.random())))+')'; });
-      micRAF=requestAnimationFrame(loop); })();
-    flash('Micro activé 🎙️ — parler aux camarades arrivera avec les classes');
+    startMicMeter(micStream,'Micro actif');
+    flash('Micro activé 🎙️ — aperçu local. Rejoins une classe pour parler aux camarades.');
   }catch(e){ flash('Micro refusé ou indisponible'); } }
-function micOff(){ if(micRAF){cancelAnimationFrame(micRAF);micRAF=null;} micAnalyser=null; if(micSrcNode){try{micSrcNode.disconnect();}catch(e){}micSrcNode=null;} if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null;} if($('micBtn'))$('micBtn').classList.remove('active','live'); if($('micPill'))$('micPill').classList.remove('show'); }
-if($('micBtn')) $('micBtn').onclick=toggleMic;
-if($('micPillOff')) $('micPillOff').onclick=micOff;
+function micOff(){ if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null;} stopMicMeter(); }
+function micButton(){ if(typeof inClass!=='undefined'&&inClass){ classVoiceToggle(); } else { toggleMic(); } }
+function micStop(){ if(typeof inClass!=='undefined'&&inClass){ classVoiceOff(); } else { micOff(); } }
+if($('micBtn')) $('micBtn').onclick=micButton;
+if($('micPillOff')) $('micPillOff').onclick=micStop;
 
 /* ===================== FULLSCREEN ===================== */
 $('fsBtn').onclick=()=>{ if(!document.fullscreenElement){ (document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen||(()=>{})).call(document.documentElement); } else { (document.exitFullscreen||document.webkitExitFullscreen||(()=>{})).call(document); } };
@@ -1051,7 +1294,7 @@ async function fillUI(){
 async function startApp(id){
   cloudMode=false; activeId=id; try{await Store.set(AKEY,id);}catch(e){} KEY='cocon:room:'+id;
   await loadRoom(); await migrateBg(); purgeDoneTasks(); clearChat(); await fillUI();
-  renderMenuAccount();
+  renderMenuAccount(); if(typeof renderMyClasses==="function")renderMyClasses();
   const p=profiles.find(x=>x.id===id)||{name:'Moi',emoji:'🌙'};
   $('acctName').textContent=(p.emoji||'🌙')+'  '+(p.name||'Moi');
   hideGate();
@@ -1062,7 +1305,7 @@ function leaveToGate(){ pPause(); hideSpot(); document.body.dataset.yt='off'; if
   document.querySelectorAll('.amb.on').forEach(b=>b.classList.remove('on'));
   Object.values(ambNodes).forEach(n=>{if(n.on){n.on=false;n.g.gain.setTargetAtTime(0,ctx().currentTime,.2);}});
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('open')); document.querySelectorAll('.dbtn[data-panel]').forEach(b=>b.classList.remove('active')); activePanel=null;
-  if(typeof closeDrawer==='function') closeDrawer(); if(typeof micOff==='function') micOff();
+  if(typeof closeDrawer==='function') closeDrawer(); if(typeof micOff==='function') micOff(); if(typeof inClass!=='undefined'&&inClass&&typeof classLeave==='function') classLeave();
   showGate(); }
 $('switchProfile').onclick=leaveToGate;
 $('exportData').onclick=()=>{ const p=profiles.find(x=>x.id===activeId)||{}; const payload={app:'cocon',v:3,profile:{name:p.name,emoji:p.emoji},room:S,exportedAt:new Date().toISOString()};
@@ -1091,7 +1334,7 @@ async function startCloud(){ cloudMode=true; activeId=null; KEY='cocon:cloudcach
   let data=null; try{ data=await cloudLoadRoom(); }catch(e){}
   if(data){ S=Object.assign(JSON.parse(JSON.stringify(DEF)),data); } else { await loadRoom(); }
   await migrateBg(); purgeDoneTasks(); clearChat(); await fillUI();
-  renderMenuAccount();
+  renderMenuAccount(); if(typeof renderMyClasses==="function")renderMyClasses();
   $('acctName').textContent='☁️  '+((cloudUser&&cloudUser.email)||'compte cloud');
   renderCloudGate(); hideGate(); cloudSaveRoom();
 }
