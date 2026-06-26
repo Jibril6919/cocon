@@ -1206,9 +1206,6 @@ if($('navSettings')) $('navSettings').onclick=()=>{ closeDrawer(); openPanel('se
 if($('navExport')) $('navExport').onclick=()=>{ closeDrawer(); $('exportData').click(); };
 if($('navImport')) $('navImport').onclick=()=>{ closeDrawer(); $('importFile').click(); };
 if($('navAbout')) $('navAbout').onclick=()=> $('aboutBox').classList.toggle('open');
-if($('navCreate')) $('navCreate').onclick=()=> $('mpBox').classList.add('open');
-if($('navSearch')) $('navSearch').onclick=()=> $('mpBox').classList.add('open');
-if($('mpClose')) $('mpClose').onclick=()=> $('mpBox').classList.remove('open');
 
 /* micro (aperçu local, prêt pour la voix en classe) */
 let micStream=null, micAnalyser=null, micRAF=null, micSrcNode=null;
