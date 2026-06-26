@@ -391,8 +391,6 @@
   <button class="dbtn" id="micBtn"><span class="lab">Micro</span><span class="badge"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg></button>
   <button class="dbtn" data-panel="sounds"><span class="lab">Sons d'ambiance</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></button>
   <button class="dbtn" data-panel="bg"><span class="lab">Fond</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></button>
-  <button class="dbtn" data-panel="report"><span class="lab">Rapport</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="12" y="6" width="3" height="11"/><rect x="17" y="13" width="3" height="4"/></svg></button>
-  <button class="dbtn" data-panel="settings"><span class="lab">Paramètres</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
 </div>
 
 <!-- BOTTOM LEFT NAV (reserved) -->
@@ -855,6 +853,8 @@ function renderTasks(){ const l=$('tlist'); if(!S.tasks.length){l.innerHTML='<di
     el.querySelector('.ck').onclick=()=>{t.done=!t.done;save();renderTasks();};
     el.querySelector('.x').onclick=()=>{S.tasks.splice(i,1);save();renderTasks();}; l.appendChild(el); }); }
 function addTask(){ const v=$('taskIn').value.trim(); if(!v)return; S.tasks.push({text:v,done:false}); $('taskIn').value=''; save(); renderTasks(); }
+function purgeDoneTasks(){ if(Array.isArray(S.tasks)){ const before=S.tasks.length; S.tasks=S.tasks.filter(t=>!t.done); if(S.tasks.length!==before) save(); } }
+function clearChat(){ if(!Array.isArray(S.chat)) S.chat=[]; else if(S.chat.length){ S.chat=[]; save(); } }
 $('taskAdd').onclick=addTask; $('taskIn').onkeydown=e=>{if(e.key==='Enter')addTask();};
 
 /* ===================== CHAT (local, prêt pour le multi) ===================== */
@@ -1050,7 +1050,7 @@ async function fillUI(){
 }
 async function startApp(id){
   cloudMode=false; activeId=id; try{await Store.set(AKEY,id);}catch(e){} KEY='cocon:room:'+id;
-  await loadRoom(); await migrateBg(); await fillUI();
+  await loadRoom(); await migrateBg(); purgeDoneTasks(); clearChat(); await fillUI();
   renderMenuAccount();
   const p=profiles.find(x=>x.id===id)||{name:'Moi',emoji:'🌙'};
   $('acctName').textContent=(p.emoji||'🌙')+'  '+(p.name||'Moi');
@@ -1090,7 +1090,7 @@ function cloudSaveDebounced(){ clearTimeout(cloudSaveT); cloudSaveT=setTimeout(c
 async function startCloud(){ cloudMode=true; activeId=null; KEY='cocon:cloudcache:'+(cloudUser?cloudUser.id:'x');
   let data=null; try{ data=await cloudLoadRoom(); }catch(e){}
   if(data){ S=Object.assign(JSON.parse(JSON.stringify(DEF)),data); } else { await loadRoom(); }
-  await migrateBg(); await fillUI();
+  await migrateBg(); purgeDoneTasks(); clearChat(); await fillUI();
   renderMenuAccount();
   $('acctName').textContent='☁️  '+((cloudUser&&cloudUser.email)||'compte cloud');
   renderCloudGate(); hideGate(); cloudSaveRoom();
