@@ -276,6 +276,22 @@
   .rep-val{font-size:10px;color:var(--cream);font-weight:600;min-height:12px;}
   .rep-lab{font-size:11px;color:var(--muted);font-weight:600;}
   .rep-foot{font-size:11px;color:var(--muted);margin-top:14px;line-height:1.5;text-align:center;}
+  /* ---- régularité (heatmap) ---- */
+  .reg-streak-pill{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:#f3c79d;background:rgba(240,168,120,.1);border:1px solid rgba(240,168,120,.3);padding:5px 12px;border-radius:999px;margin-bottom:14px;}
+  .reg-streak-pill b{color:#f0a868;}
+  .reg-stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px;}
+  .reg-stat{background:rgba(243,233,218,.04);border:1px solid var(--line);border-radius:13px;padding:12px;}
+  .reg-num{font-family:'Space Mono',monospace;font-size:21px;font-weight:700;color:#f0d6bf;line-height:1;}
+  .reg-num small{font-size:11px;color:var(--muted);font-weight:400;margin:0 1px;}
+  .reg-lbl{font-size:11px;color:var(--muted);margin-top:7px;}
+  .heat{overflow-x:auto;padding-bottom:4px;}
+  .heat-cols{display:inline-flex;gap:4px;min-width:max-content;}
+  .heat-col{display:flex;flex-direction:column;gap:4px;}
+  .heat-cell{width:13px;height:13px;border-radius:3.5px;}
+  .heat-cell.today{outline:1.6px solid #f0a868;outline-offset:1px;}
+  .heat-cell.glow{box-shadow:0 0 6px #f0a86866;}
+  .heat-legend{display:flex;align-items:center;gap:4px;justify-content:flex-end;margin-top:12px;font-size:11px;color:var(--muted);}
+  .heat-legend i{width:11px;height:11px;border-radius:3px;display:inline-block;}
   /* ---- classes (multi) ---- */
   .mp-cancel{margin-top:8px;width:100%;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:10px;padding:8px;font-weight:600;font-size:12px;font-family:inherit;}
   .cls-join-in{width:100%;background:rgba(243,233,218,.06);border:1px solid var(--line);border-radius:11px;padding:11px 12px;color:var(--cream);font-family:'Space Mono',monospace;font-weight:700;font-size:18px;letter-spacing:3px;text-align:center;text-transform:uppercase;outline:none;margin-bottom:8px;}
@@ -296,6 +312,37 @@
   .cls-pill.show{display:flex;}
   .cls-pill .cls-dot{width:8px;height:8px;border-radius:50%;background:var(--peach);box-shadow:0 0 8px var(--peach);}
   .cls-pill b{color:var(--peach);}
+  .cr-tlabel{font-size:11px;color:var(--muted);margin:6px 0 6px;font-weight:600;}
+  .cr-tseg{display:flex;gap:6px;margin-bottom:10px;}
+  .crt{flex:1;border:1px solid var(--line);background:rgba(243,233,218,.05);color:var(--cream);border-radius:10px;padding:9px 0;font-weight:600;font-size:12px;font-family:inherit;}
+  .crt.on{background:var(--peach);color:#1a1226;border-color:var(--peach);}
+  .sr-t{flex:none;font-size:10.5px;color:var(--muted);font-weight:600;background:rgba(243,233,218,.06);border-radius:999px;padding:3px 8px;white-space:nowrap;}
+  .cls-timer-row{font-size:12.5px;color:var(--muted);margin-bottom:10px;}
+  .cls-timer-row b{color:var(--cream);}
+  .cls-timer-ctrl{margin:2px 0 12px;padding:11px;background:rgba(240,168,120,.06);border:1px solid rgba(240,168,120,.22);border-radius:13px;}
+  .cls-tc-lbl{font-size:11px;color:var(--muted);margin-bottom:7px;font-weight:600;}
+  .cls-tc-seg{display:flex;gap:6px;}
+  .clt{flex:1;border:1px solid var(--line);background:rgba(243,233,218,.05);color:var(--cream);border-radius:10px;padding:8px 0;font-weight:600;font-size:11.5px;font-family:inherit;}
+  .clt.on{background:var(--peach);color:#1a1226;border-color:var(--peach);}
+  /* ---- niveau scolaire ---- */
+  .lvl-sel{width:100%;background:rgba(243,233,218,.06);border:1px solid var(--line);border-radius:11px;padding:10px 12px;color:var(--cream);font-size:13.5px;font-family:inherit;outline:none;margin-bottom:8px;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a99c93' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+  .lvl-sel:focus{border-color:var(--accent);}
+  .lvl-sel option{background:#201820;color:var(--cream);}
+  .lvl-edit{margin-top:2px;}
+  .lvl-spes{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
+  .spe-chip{border:1px solid var(--line);background:rgba(243,233,218,.05);color:var(--cream);border-radius:999px;padding:6px 11px;font-size:11.5px;font-weight:600;font-family:inherit;}
+  .spe-chip.on{background:var(--peach);color:#1a1226;border-color:var(--peach);}
+  /* ---- recherche grande fenêtre ---- */
+  .panel.panel-wide{width:min(460px,calc(100vw - 20px));max-width:460px;max-height:min(84vh,660px);}
+  .srch-filters{display:flex;gap:8px;margin-bottom:8px;}
+  .srch-filters .flt{flex:1;margin-bottom:0;}
+  .srch-tseg{display:flex;gap:6px;margin-bottom:12px;}
+  .fts{flex:1;border:1px solid var(--line);background:rgba(243,233,218,.05);color:var(--cream);border-radius:9px;padding:8px 0;font-weight:600;font-size:11px;font-family:inherit;}
+  .fts.on{background:var(--peach);color:#1a1226;border-color:var(--peach);}
+  .search-results .sr-row{flex-direction:column;align-items:stretch;gap:0;}
+  .sr-main{display:flex;align-items:center;gap:9px;}
+  .sr-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+  .sr-b{font-size:10.5px;color:var(--cream);background:rgba(243,233,218,.08);border-radius:999px;padding:3px 8px;font-weight:600;}
   .msg-nm{font-size:10px;opacity:.7;margin-bottom:2px;font-weight:600;}
   /* ---- classes v2 ---- */
   .myclass{display:flex;align-items:center;gap:10px;}
@@ -548,18 +595,63 @@
   <p class="hint">Nom, tâches, réglages et fond sont sauvegardés et reviennent à ta prochaine visite. La salle ne disparaît que si tu la vides.</p>
 </div>
 
+<div class="panel panel-wide" id="panel-search">
+  <h3>🔎 Rejoindre une classe</h3>
+  <input id="searchInput" placeholder="Rechercher par nom…" class="cls-srch-in"/>
+  <div class="srch-filters">
+    <input id="fSubject" placeholder="Matière" class="cls-srch-in flt"/>
+    <select id="fLevel" class="lvl-sel flt">
+      <option value="">Tous niveaux</option>
+      <option value="college">Collège</option>
+      <option value="lycee">Lycée</option>
+      <option value="licence">Licence</option>
+      <option value="master">Master</option>
+      <option value="doctorat">Doctorat</option>
+    </select>
+  </div>
+  <div class="srch-tseg">
+    <button type="button" class="fts on" data-t="">Tous</button>
+    <button type="button" class="fts" data-t="25/5">🍅 25/5</button>
+    <button type="button" class="fts" data-t="50/10">🍅 50/10</button>
+    <button type="button" class="fts" data-t="chrono">⏱️ Chrono</button>
+  </div>
+  <div class="search-results" id="searchResults"></div>
+</div>
+
 <div class="panel" id="panel-report">
-  <h3>📊 Rapport de révision</h3>
-  <div class="rep-tabs"><button id="repWeek" class="rep on" type="button">Semaine</button><button id="repMonth" class="rep" type="button">Mois</button></div>
-  <div class="rep-total"><div class="rep-big" id="repBig">0 min</div></div>
-  <div class="rep-nav"><button class="rep-arrow" id="repPrev" type="button">‹</button><span id="repRange">cette semaine</span><button class="rep-arrow" id="repNext" type="button">›</button></div>
-  <div class="rep-chart" id="repChart"></div>
+  <h3>📊 Rapport</h3>
+  <div class="rep-tabs"><button id="repWeek" class="rep on" type="button">Semaine</button><button id="repMonth" class="rep" type="button">Mois</button><button id="repReg" class="rep" type="button">Régularité</button></div>
+  <div id="repBarsView">
+    <div class="rep-total"><div class="rep-big" id="repBig">0 min</div></div>
+    <div class="rep-nav"><button class="rep-arrow" id="repPrev" type="button">‹</button><span id="repRange">cette semaine</span><button class="rep-arrow" id="repNext" type="button">›</button></div>
+    <div class="rep-chart" id="repChart"></div>
+  </div>
+  <div id="repRegView" style="display:none">
+    <div class="reg-streak-pill">🔥 <b id="regStreakP">0</b> jours d'affilée</div>
+    <div class="reg-stats">
+      <div class="reg-stat"><div class="reg-num" id="regWeek">0</div><div class="reg-lbl">Total 7 jours</div></div>
+      <div class="reg-stat"><div class="reg-num" id="regAvg">0</div><div class="reg-lbl">Moyenne / jour</div></div>
+      <div class="reg-stat"><div class="reg-num" id="regBest">0</div><div class="reg-lbl">Meilleure journée</div></div>
+      <div class="reg-stat"><div class="reg-num" id="regStreak">0</div><div class="reg-lbl">Série en cours</div></div>
+    </div>
+    <div class="heat" id="heatBox"></div>
+    <div class="heat-legend"><span>moins</span><i style="background:#241d20"></i><i style="background:#4a2f24"></i><i style="background:#7a4a2f"></i><i style="background:#c47a45"></i><i style="background:#f0a868"></i><span>plus</span></div>
+  </div>
   <p class="rep-foot">Temps suivi automatiquement via le <b>Pomodoro (focus)</b> et le <b>Chrono</b>.</p>
 </div>
 
 <div class="panel" id="panel-class">
   <h3>👥 <span id="clsName">Classe</span></h3>
   <div class="cls-code-row"><span class="cls-code" id="clsCode">······</span><button class="cls-copy" id="clsCopy" type="button">Copier</button></div>
+  <div class="cls-timer-row">Minuteur : <b id="clsTimer">🍅 25/5</b></div>
+  <div class="cls-timer-ctrl" id="clsTimerCtrl" style="display:none">
+    <div class="cls-tc-lbl">Changer le minuteur (pour tout le monde)</div>
+    <div class="cls-tc-seg">
+      <button type="button" class="clt" data-t="25/5">🍅 25/5</button>
+      <button type="button" class="clt" data-t="50/10">🍅 50/10</button>
+      <button type="button" class="clt" data-t="chrono">⏱️ Chrono</button>
+    </div>
+  </div>
   <div class="cls-hint">Partage ce code (ou le nom). 💬 chat, 🎙️ micro et 📷/🖥️ caméra-écran sont partagés avec la classe.</div>
   <div class="cls-mem-h">Connectés (<span id="clsCount">1</span>)</div>
   <div class="cls-members" id="clsMembers"></div>
@@ -593,6 +685,7 @@
   </div>
   <div class="acc-meta" id="accMeta">
     <div class="acc-meta-row" id="accStatusRow"><span>Statut</span><b id="accStatusVal">—</b></div>
+    <div class="acc-meta-row" id="accLevelRow"><span>Niveau</span><b id="accLevelVal">—</b></div>
     <div class="acc-meta-row" id="accEmailRow"><span>Email</span><b id="accEmailVal">—</b></div>
     <div class="acc-meta-row"><span>Sessions focus</span><b id="accTomVal">0 🍅</b></div>
   </div>
@@ -606,6 +699,26 @@
     <div class="emos" id="accEmojis"></div>
     <input id="accNameInput" maxlength="24" placeholder="Ton nom / pseudo" class="acc-field"/>
     <input id="accStatusInput" maxlength="60" placeholder="Statut (optionnel) — ex: en révision 📚" class="acc-field"/>
+    <div class="lvl-edit">
+      <div class="acc-edit-lbl">Niveau d'étude (optionnel)</div>
+      <select id="lvlType" class="lvl-sel">
+        <option value="">Non précisé</option>
+        <option value="college">Collège</option>
+        <option value="lycee">Lycée</option>
+        <option value="licence">Licence</option>
+        <option value="master">Master</option>
+        <option value="doctorat">Doctorat</option>
+      </select>
+      <div id="lvlCollege" style="display:none"><select id="lvlClasseC" class="lvl-sel"></select></div>
+      <div id="lvlLycee" style="display:none">
+        <select id="lvlClasse" class="lvl-sel"></select>
+        <select id="lvlFiliere" class="lvl-sel"></select>
+        <div id="lvlSerieWrap" style="display:none"><select id="lvlSerie" class="lvl-sel"></select></div>
+        <div id="lvlSpesWrap" style="display:none"><div class="acc-edit-lbl">Spécialités</div><div class="lvl-spes" id="lvlSpes"></div></div>
+      </div>
+      <div id="lvlCpge" style="display:none"><select id="lvlCpgeFil" class="lvl-sel"></select></div>
+      <div id="lvlFac" style="display:none"><input id="lvlDomaine" maxlength="40" placeholder="Filière / domaine (ex : Informatique)" class="acc-field"/></div>
+    </div>
     <button class="bsm acc-save-all" id="accNameSave" type="button">Enregistrer</button>
   </div>
   <div class="acc-actions"><button class="nav-btn-sm" id="menuSwitch" type="button">Changer de profil</button></div>
@@ -619,14 +732,28 @@
     <input id="crName" maxlength="30" placeholder="Nom de la classe" class="cls-srch-in"/>
     <label class="cr-toggle"><input type="checkbox" id="crPrivate"/> <span>Privée (avec mot de passe)</span></label>
     <div id="crPassWrap" style="display:none"><input id="crPass" maxlength="40" placeholder="Mot de passe" class="cls-srch-in"/></div>
+    <input id="crSubject" maxlength="30" placeholder="Matière (optionnel, ex : Maths)" class="cls-srch-in"/>
+    <select id="crLevel" class="lvl-sel">
+      <option value="">Niveau (optionnel)</option>
+      <option value="college">Collège</option>
+      <option value="lycee">Lycée</option>
+      <option value="licence">Licence</option>
+      <option value="master">Master</option>
+      <option value="doctorat">Doctorat</option>
+    </select>
+    <div class="cr-tlabel">Minuteur de la classe (appliqué à tous)</div>
+    <div class="cr-tseg">
+      <button type="button" class="crt on" data-t="25/5">🍅 25/5</button>
+      <button type="button" class="crt" data-t="50/10">🍅 50/10</button>
+      <button type="button" class="crt" data-t="chrono">⏱️ Chrono</button>
+    </div>
     <button class="mp-x" id="crCreate" type="button">Créer la classe</button>
     <button class="mp-cancel" id="crCancel" type="button">Annuler</button>
   </div>
   <div class="mp-box" id="mpBox">
     <h4>Rejoindre une classe</h4>
-    <div class="srch-row"><input id="searchInput" placeholder="Nom de la classe…" class="cls-srch-in"/><button class="srch-btn" id="searchBtn" type="button">🔍</button></div>
-    <div class="search-results" id="searchResults"></div>
-    <button class="mp-cancel" id="mpClose" type="button">Fermer</button>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:8px;">La recherche s'ouvre en grand.</p>
+    <button class="mp-cancel" id="mpClose" type="button">Annuler</button>
   </div>
 
   <div class="nav-sec">Mon espace</div>
@@ -711,7 +838,7 @@ const Store = {
 
 /* ===================== STATE ===================== */
 const DEF={ roomName:'', tom:0, dur:{focus:25,short:5,long:15}, longEvery:4, auto:false, chime:true,
-  ambVol:50, ytVol:70, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, studyLog:{}, myClasses:[] };
+  ambVol:50, ytVol:70, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, studyLog:{}, myClasses:[], profLevel:null };
 let S=JSON.parse(JSON.stringify(DEF));
 let mode='focus', running=false, remaining=1500, total=1500, ticker=null, focusDone=0;
 const PHASE={focus:'focus',short:'pause',long:'longue'};
@@ -811,7 +938,31 @@ const MOISC=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.'
 function fmtHours(min){ min=Math.round(min); const h=Math.floor(min/60), m=min%60; if(h>0) return h+'h'+(m?String(m).padStart(2,'0'):''); return m+' min'; }
 function fmtHoursShort(min){ const h=Math.floor(min/60), m=min%60; if(h>0) return h+'h'+(m||''); return m+'m'; }
 function startOfWeek(dt){ const d=new Date(dt); const day=(d.getDay()+6)%7; d.setHours(0,0,0,0); d.setDate(d.getDate()-day); return d; }
+const HEAT_LEVELS=['#241d20','#4a2f24','#7a4a2f','#c47a45','#f0a868'];
+function heatLevel(min){ if(min<=0)return 0; if(min<=30)return 1; if(min<=60)return 2; if(min<=120)return 3; return 4; }
+function renderReg(){
+  const log=S.studyLog||{}; const today=new Date(); today.setHours(0,0,0,0); const val=d=>log[todayKey(d)]||0;
+  let week=0; for(let i=0;i<7;i++){ const d=new Date(today); d.setDate(today.getDate()-i); week+=val(d); }
+  const avg=Math.round(week/7); let best=0; Object.keys(log).forEach(k=>{ if(log[k]>best)best=log[k]; });
+  let streak=0; for(let i=0;;i++){ const d=new Date(today); d.setDate(today.getDate()-i); if(val(d)>=25)streak++; else break; }
+  if($('regWeek'))$('regWeek').innerHTML=Math.floor(week/60)+'<small>h</small>'+(week%60)+'<small>m</small>';
+  if($('regAvg'))$('regAvg').innerHTML=avg+'<small>min</small>';
+  if($('regBest'))$('regBest').innerHTML=Math.floor(best/60)+'<small>h</small>'+(best%60)+'<small>m</small>';
+  if($('regStreak'))$('regStreak').innerHTML=streak+'<small>j</small>';
+  if($('regStreakP'))$('regStreakP').textContent=streak;
+  const WEEKS=18, end=new Date(today), start=new Date(end); start.setDate(start.getDate()-(WEEKS*7-1)); start.setDate(start.getDate()-start.getDay());
+  let h='<div class="heat-cols">'; let cur=new Date(start);
+  while(cur<=end){ h+='<div class="heat-col">';
+    for(let d=0;d<7;d++){ const future=cur>end; const min=future?-1:val(cur); const lv=future?-1:heatLevel(min); const isT=todayKey(cur)===todayKey(today);
+      const bg=future?'transparent':HEAT_LEVELS[lv]; const ttl=future?'':(cur.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' · '+min+' min');
+      h+='<div class="heat-cell'+(isT?' today':'')+(lv===4?' glow':'')+'" style="background:'+bg+'" title="'+ttl+'"></div>';
+      cur=new Date(cur.getTime()+86400000); }
+    h+='</div>'; }
+  h+='</div>'; if($('heatBox'))$('heatBox').innerHTML=h;
+}
 function renderReport(){
+  if(repPeriod==='reg'){ if($('repBarsView'))$('repBarsView').style.display='none'; if($('repRegView'))$('repRegView').style.display=''; renderReg(); return; }
+  if($('repBarsView'))$('repBarsView').style.display=''; if($('repRegView'))$('repRegView').style.display='none';
   const log=S.studyLog||{}; const chart=$('repChart'); if(!chart)return; chart.innerHTML='';
   let bars=[], total=0, range='';
   if(repPeriod==='week'){
@@ -831,12 +982,14 @@ function renderReport(){
   if($('repNext')) $('repNext').classList.toggle('off', repOffset>=0);
   const max=Math.max(1,...bars.map(b=>b.min));
   bars.forEach(b=>{ const c=document.createElement('div'); c.className='rep-col';
-    const h=Math.max(3,Math.round((b.min/max)*100));
-    c.innerHTML='<div class="rep-bar-wrap"><div class="rep-bar" style="height:'+h+'%"></div></div><div class="rep-val">'+(b.min?fmtHoursShort(b.min):'')+'</div><div class="rep-lab">'+b.label+'</div>';
+    const ht=Math.max(3,Math.round((b.min/max)*100));
+    c.innerHTML='<div class="rep-bar-wrap"><div class="rep-bar" style="height:'+ht+'%"></div></div><div class="rep-val">'+(b.min?fmtHoursShort(b.min):'')+'</div><div class="rep-lab">'+b.label+'</div>';
     chart.appendChild(c); });
 }
-if($('repWeek')) $('repWeek').onclick=()=>{ repPeriod='week'; repOffset=0; $('repWeek').classList.add('on'); $('repMonth').classList.remove('on'); renderReport(); };
-if($('repMonth')) $('repMonth').onclick=()=>{ repPeriod='month'; repOffset=0; $('repMonth').classList.add('on'); $('repWeek').classList.remove('on'); renderReport(); };
+function repTab(which){ repPeriod=which; repOffset=0; ['repWeek','repMonth','repReg'].forEach(id=>{ const m={repWeek:'week',repMonth:'month',repReg:'reg'}[id]; if($(id))$(id).classList.toggle('on',m===which); }); renderReport(); }
+if($('repWeek')) $('repWeek').onclick=()=>repTab('week');
+if($('repMonth')) $('repMonth').onclick=()=>repTab('month');
+if($('repReg')) $('repReg').onclick=()=>repTab('reg');
 if($('repPrev')) $('repPrev').onclick=()=>{ repOffset--; renderReport(); };
 if($('repNext')) $('repNext').onclick=()=>{ if(repOffset<0){ repOffset++; renderReport(); } };
 
@@ -943,9 +1096,31 @@ $('chatSend').onclick=sendChat; $('chatIn').onkeydown=e=>{if(e.key==='Enter')sen
 
 /* ===================== CLASSES (multi : Supabase Realtime + WebRTC) ===================== */
 let sbRT=null, classCh=null, inClass=false, classCode='', className='', classIsPublic=true, classCreator=false, myPid='';
-const peers={}; let voiceStream=null, shareKind=null;
+const peers={}; let voiceStream=null, shareKind=null, classTimer='25/5';
 const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
 function hashStr(s){ let h=5381; s=String(s); for(let i=0;i<s.length;i++){ h=((h<<5)+h)^s.charCodeAt(i); } return (h>>>0).toString(36); }
+function timerLabel(t){ if(t==='50/10')return '🍅 50/10'; if(t==='chrono')return '⏱️ Chrono'; return '🍅 25/5'; }
+function applyClassTimer(t){ if(!t) return;
+  if(t==='chrono'){ if(typeof setPKind==='function') setPKind('chrono'); return; }
+  let f=25,s=5; if(t==='50/10'){ f=50; s=10; }
+  if(S.dur){ S.dur.focus=f; S.dur.short=s; save(); }
+  if($('dF'))$('dF').value=f; if($('dS'))$('dS').value=s;
+  if(typeof setPKind==='function') setPKind('pomo');
+  if(typeof pReset==='function' && typeof running!=='undefined' && !running) pReset(); }
+async function setClassTimer(t){ if(!classCreator||!inClass){ return; } classTimer=t;
+  if($('clsTimer'))$('clsTimer').textContent=timerLabel(t);
+  document.querySelectorAll('.clt').forEach(x=>x.classList.toggle('on', x.dataset.t===t));
+  applyClassTimer(t);
+  if(classCh) classCh.send({type:'broadcast',event:'timer',payload:{timer:t}});
+  try{ await sbFetch('/rest/v1/classes?code=eq.'+encodeURIComponent(classCode),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({timer:t})}); }catch(e){}
+  addMyClass({code:classCode,name:className,isPublic:classIsPublic,creator:true,timer:t});
+  flash('Minuteur de la classe → '+timerLabel(t)+' (pour tous)'); }
+function onClassTimer(p){ if(!p||!p.timer)return; classTimer=p.timer;
+  if($('clsTimer'))$('clsTimer').textContent=timerLabel(classTimer);
+  document.querySelectorAll('.clt').forEach(x=>x.classList.toggle('on', x.dataset.t===classTimer));
+  applyClassTimer(classTimer);
+  if(inClass) addMyClass({code:classCode,name:className,isPublic:classIsPublic,creator:classCreator,timer:classTimer});
+  flash('⏱️ Minuteur de la classe : '+timerLabel(classTimer)); }
 function myName(){ return (S.profName||'').trim() || ((cloudMode&&cloudUser&&cloudUser.email)?cloudUser.email.split('@')[0]:'Invité'); }
 function myEmoji(){ return (cloudMode&&cloudUser)?'☁️':(((profiles||[]).find(x=>x.id===activeId)||{emoji:'🌙'}).emoji||'🌙'); }
 function myUid(){ return (cloudMode&&cloudUser&&cloudUser.id)||('local-'+(activeId||'x')); }
@@ -954,55 +1129,68 @@ async function ensureRT(){ if(sbRT) return sbRT; const m=await import('https://e
 
 /* --- mes classes (persistées, re-entrée sans recherche) --- */
 function myClasses(){ if(!S) return []; if(!Array.isArray(S.myClasses)) S.myClasses=[]; return S.myClasses; }
-function addMyClass(c){ const l=myClasses(); const ex=l.find(x=>x.code===c.code); if(ex){ ex.name=c.name; ex.isPublic=c.isPublic; ex.creator=!!c.creator; } else { l.push({code:c.code,name:c.name,isPublic:c.isPublic,creator:!!c.creator}); } save(); renderMyClasses(); }
+function addMyClass(c){ const l=myClasses(); const ex=l.find(x=>x.code===c.code); if(ex){ ex.name=c.name; ex.isPublic=c.isPublic; ex.creator=!!c.creator; ex.timer=c.timer; } else { l.push({code:c.code,name:c.name,isPublic:c.isPublic,creator:!!c.creator,timer:c.timer}); } save(); renderMyClasses(); }
 function removeMyClass(code){ S.myClasses=myClasses().filter(x=>x.code!==code); save(); renderMyClasses(); }
 function renderMyClasses(){ const box=$('myClassesList'); if(!box)return; const l=myClasses(); box.innerHTML='';
   if(!l.length){ box.style.display='none'; return; } box.style.display='block';
   l.forEach(c=>{ const b=document.createElement('button'); b.className='navrow myclass'; b.type='button';
     b.innerHTML='<span class="mc-ic">'+(c.isPublic?'🌐':'🔒')+'</span><span class="mc-nm">'+(c.name||c.code)+'</span><span class="mc-code">'+c.code+'</span>';
-    b.onclick=()=>{ closeDrawer(); openPanel('class'); classEnter(c.code,c.name,c.isPublic,c.creator); };
+    b.onclick=()=>{ closeDrawer(); openPanel('class'); classEnter(c.code,c.name,c.isPublic,c.creator,c.timer); };
     box.appendChild(b); }); }
 
 /* --- création / recherche (table Supabase via REST anon) --- */
-async function classCreate(name,isPublic,pass){
+async function classCreate(name,isPublic,pass,timer,subject,level){
   name=(name||'').trim(); if(name.length<2){ flash('Donne un nom (2 caractères min)'); return; }
   if(!isPublic && (pass||'').length<1){ flash('Mets un mot de passe pour une classe privée'); return; }
-  const code=genCode();
-  const row={code,name,is_public:!!isPublic,pass:(isPublic?null:hashStr(pass||'')),creator:myUid()};
+  timer=timer||'25/5'; const code=genCode();
+  const row={code,name,is_public:!!isPublic,pass:(isPublic?null:hashStr(pass||'')),creator:myUid(),timer,subject:(subject||null),level:(level||null)};
   flash('Création…');
   try{ const r=await sbFetch('/rest/v1/classes',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(row)});
-    if(!r.ok){ const t=await r.text().catch(()=>''); flash((t.indexOf('does not exist')>=0||t.indexOf('relation')>=0)?'Table « classes » manquante (voir SQL)':'Création impossible'); return; }
+    if(!r.ok){ const t=await r.text().catch(()=>''); flash((t.indexOf('does not exist')>=0||t.indexOf('relation')>=0||t.indexOf('column')>=0)?'Table « classes » à mettre à jour (voir SQL)':'Création impossible'); return; }
   }catch(e){ flash('Création impossible (réseau)'); return; }
-  closeDrawer(); openPanel('class'); classEnter(code,name,!!isPublic,true);
+  closeDrawer(); openPanel('class'); classEnter(code,name,!!isPublic,true,timer);
 }
-async function classSearch(term){
-  term=(term||'').trim(); const box=$('searchResults'); if(box) box.innerHTML='<div class="sr-empty">Recherche…</div>';
-  let rows=[]; try{ const q=term?('name=ilike.*'+encodeURIComponent(term)+'*&'):''; const r=await sbFetch('/rest/v1/classes?'+q+'select=code,name,is_public&order=created_at.desc&limit=30'); if(r.ok) rows=await r.json().catch(()=>[]); }catch(e){}
+let fTimerSel='';
+async function classSearch(){
+  const box=$('searchResults'); if(box) box.innerHTML='<div class="sr-empty">Recherche…</div>';
+  const term=($('searchInput')?$('searchInput').value:'').trim();
+  const subj=($('fSubject')?$('fSubject').value:'').trim();
+  const lvl=($('fLevel')?$('fLevel').value:''); const tim=fTimerSel;
+  let qs=[]; if(term)qs.push('name=ilike.*'+encodeURIComponent(term)+'*'); if(subj)qs.push('subject=ilike.*'+encodeURIComponent(subj)+'*'); if(lvl)qs.push('level=eq.'+encodeURIComponent(lvl)); if(tim)qs.push('timer=eq.'+encodeURIComponent(tim));
+  const q=qs.length?(qs.join('&')+'&'):'';
+  let rows=[];
+  try{ let r=await sbFetch('/rest/v1/classes?'+q+'select=code,name,is_public,timer,subject,level&order=created_at.desc&limit=40');
+    if(!r.ok){ const q2=term?('name=ilike.*'+encodeURIComponent(term)+'*&'):''; r=await sbFetch('/rest/v1/classes?'+q2+'select=code,name,is_public&order=created_at.desc&limit=40'); }
+    if(r.ok) rows=await r.json().catch(()=>[]); }catch(e){}
   if(!box) return;
   if(!rows.length){ box.innerHTML='<div class="sr-empty">Aucune classe trouvée.</div>'; return; }
   box.innerHTML='';
   rows.forEach(c=>{ const el=document.createElement('div'); el.className='sr-row';
-    el.innerHTML='<span class="sr-ic">'+(c.is_public?'🌐':'🔒')+'</span><span class="sr-nm">'+c.name+'</span><button class="sr-join" type="button">Rejoindre</button>';
+    let badges=''; if(c.subject) badges+='<span class="sr-b">'+c.subject+'</span>'; if(c.level) badges+='<span class="sr-b">'+levelCatLabel(c.level)+'</span>'; badges+='<span class="sr-t">'+timerLabel(c.timer)+'</span>';
+    el.innerHTML='<div class="sr-main"><span class="sr-ic">'+(c.is_public?'🌐':'🔒')+'</span><span class="sr-nm">'+c.name+'</span><button class="sr-join" type="button">Rejoindre</button></div><div class="sr-badges">'+badges+'</div>';
     el.querySelector('.sr-join').onclick=()=>joinFromSearch(c);
     box.appendChild(el); });
 }
 async function joinFromSearch(c){
-  if(c.is_public){ $('mpBox').classList.remove('open'); closeDrawer(); openPanel('class'); classEnter(c.code,c.name,true,false); return; }
+  if(c.is_public){ closeDrawer(); openPanel('class'); classEnter(c.code,c.name,true,false,c.timer); return; }
   const pw=prompt('Mot de passe pour « '+c.name+' »'); if(pw===null) return;
   try{ const r=await sbFetch('/rest/v1/classes?code=eq.'+encodeURIComponent(c.code)+'&select=pass'); const a=await r.json().catch(()=>[]); const stored=(a&&a[0])?a[0].pass:null;
-    if(stored && hashStr(pw)===stored){ $('mpBox').classList.remove('open'); closeDrawer(); openPanel('class'); classEnter(c.code,c.name,false,false); }
+    if(stored && hashStr(pw)===stored){ closeDrawer(); openPanel('class'); classEnter(c.code,c.name,false,false,c.timer); }
     else flash('Mot de passe incorrect'); }catch(e){ flash('Erreur de connexion'); }
 }
 
 /* --- entrer / sortir / quitter / supprimer --- */
-async function classEnter(code,name,isPublic,creator){
+async function classEnter(code,name,isPublic,creator,timer){
   code=(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8); if(code.length<4){ flash('Code invalide'); return; }
   if(inClass) await classLeaveCh();
   flash('Connexion à la classe…');
   let rt; try{ rt=await ensureRT(); }catch(e){ flash('Temps-réel indisponible (réseau ?)'); return; }
   myPid=myUid()+'-'+Math.random().toString(36).slice(2,7);
-  classCode=code; className=name||code; classIsPublic=isPublic!==false; classCreator=!!creator;
+  classCode=code; className=name||code; classIsPublic=isPublic!==false; classCreator=!!creator; classTimer=timer||'25/5';
   if($('clsCode')) $('clsCode').textContent=code; if($('clsName')) $('clsName').textContent=className;
+  if($('clsTimer')) $('clsTimer').textContent=timerLabel(classTimer);
+  if($('clsTimerCtrl')) $('clsTimerCtrl').style.display=classCreator?'block':'none';
+  document.querySelectorAll('.clt').forEach(x=>x.classList.toggle('on', x.dataset.t===classTimer));
   if($('clsDelete')) $('clsDelete').style.display=classCreator?'block':'none';
   const ch=rt.channel('class:'+code,{config:{presence:{key:myPid},broadcast:{self:false}}}); classCh=ch;
   ch.on('presence',{event:'sync'},()=>{ presenceList().forEach(p=>{ if(p.pid&&p.pid!==myPid) makePeer(p.pid); }); renderMembers(); });
@@ -1010,8 +1198,10 @@ async function classEnter(code,name,isPublic,creator){
   ch.on('presence',{event:'leave'},({leftPresences})=>{ (leftPresences||[]).forEach(p=>{ if(p.pid){ closePeer(p.pid); removeRemoteTile(p.pid); } }); renderMembers(); });
   ch.on('broadcast',{event:'chat'},({payload})=>onClassChat(payload));
   ch.on('broadcast',{event:'signal'},({payload})=>onSignal(payload));
+  ch.on('broadcast',{event:'timer'},({payload})=>onClassTimer(payload));
   ch.subscribe(async (st)=>{ if(st==='SUBSCRIBED'){ inClass=true; await ch.track(myPresence()); onClassEntered(); } else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){ flash('Connexion classe échouée'); } });
-  addMyClass({code,name:className,isPublic:classIsPublic,creator:classCreator});
+  applyClassTimer(classTimer);
+  addMyClass({code,name:className,isPublic:classIsPublic,creator:classCreator,timer:classTimer});
 }
 async function classLeaveCh(){ classVoiceOff(); stopShareToMesh(); for(const pid in peers){ removeRemoteTile(pid); closePeer(pid); }
   if(classCh){ try{ await classCh.unsubscribe(); }catch(e){} try{ sbRT&&sbRT.removeChannel(classCh); }catch(e){} classCh=null; }
@@ -1087,18 +1277,22 @@ function updateTileLabel(pid,name){ const t=document.getElementById('rv-'+pid); 
 
 /* ---- menu / boutons ---- */
 if($('navCreate')) $('navCreate').onclick=()=>{ $('mpCreate').classList.add('open'); };
-if($('navSearch')) $('navSearch').onclick=()=>{ $('mpBox').classList.add('open'); if($('searchInput'))$('searchInput').focus(); classSearch(''); };
-if($('searchBtn')) $('searchBtn').onclick=()=>classSearch($('searchInput').value);
-if($('searchInput')) $('searchInput').oninput=()=>{ clearTimeout(window._srT); window._srT=setTimeout(()=>classSearch($('searchInput').value),350); };
+if($('navSearch')) $('navSearch').onclick=()=>{ closeDrawer(); openPanel('search'); classSearch(); if($('searchInput'))$('searchInput').focus(); };
+if($('searchInput')) $('searchInput').oninput=()=>{ clearTimeout(window._srT); window._srT=setTimeout(()=>classSearch(),350); };
+if($('fSubject')) $('fSubject').oninput=()=>{ clearTimeout(window._srT2); window._srT2=setTimeout(()=>classSearch(),350); };
+if($('fLevel')) $('fLevel').onchange=()=>classSearch();
+document.querySelectorAll('.fts').forEach(b=> b.onclick=()=>{ document.querySelectorAll('.fts').forEach(x=>x.classList.remove('on')); b.classList.add('on'); fTimerSel=b.dataset.t; classSearch(); });
 if($('mpClose')) $('mpClose').onclick=()=>$('mpBox').classList.remove('open');
 if($('crPrivate')) $('crPrivate').onchange=()=>{ $('crPassWrap').style.display=$('crPrivate').checked?'block':'none'; };
-if($('crCreate')) $('crCreate').onclick=()=>{ const n=$('crName').value; const pub=!$('crPrivate').checked; const pw=$('crPass').value; $('mpCreate').classList.remove('open'); classCreate(n,pub,pw); };
+document.querySelectorAll('.crt').forEach(b=> b.onclick=()=>{ document.querySelectorAll('.crt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); });
+if($('crCreate')) $('crCreate').onclick=()=>{ const n=$('crName').value; const pub=!$('crPrivate').checked; const pw=$('crPass').value; const tb=document.querySelector('.crt.on'); const t=tb?tb.dataset.t:'25/5'; const subj=$('crSubject')?$('crSubject').value.trim():''; const lvl=$('crLevel')?$('crLevel').value:''; $('mpCreate').classList.remove('open'); classCreate(n,pub,pw,t,subj,lvl); };
 if($('crCancel')) $('crCancel').onclick=()=>$('mpCreate').classList.remove('open');
 if($('clsExit')) $('clsExit').onclick=()=>classExit();
 if($('clsQuit')) $('clsQuit').onclick=()=>classQuit();
 if($('clsDelete')) $('clsDelete').onclick=()=>classDelete();
 if($('clsCopy')) $('clsCopy').onclick=async ()=>{ try{ await navigator.clipboard.writeText(classCode); flash('Code copié ✓'); }catch(e){ flash('Code : '+classCode); } };
 if($('clsPill')) $('clsPill').onclick=()=>openPanel('class');
+document.querySelectorAll('.clt').forEach(b=> b.onclick=()=>setClassTimer(b.dataset.t));
 renderMyClasses();
 
 /* ===================== BACKGROUND (fix import mobile) ===================== */
@@ -1165,6 +1359,28 @@ $('roomName').oninput=()=>{S.roomName=$('roomName').value;save();};
 let menuEmoji='🌙';
 function closeDrawer(){ $('drawer').classList.remove('open'); $('scrim').classList.remove('show'); }
 function openDrawer(){ renderMenuAccount(); if(typeof renderMyClasses==='function')renderMyClasses(); $('drawer').classList.add('open'); $('scrim').classList.add('show'); }
+/* ---- niveaux scolaires (système FR) ---- */
+const SPES=['Mathématiques','Physique-Chimie','SVT','SES','NSI','HGGSP','HLP','LLCER Anglais','LLCER Espagnol','SI','Arts','EPS','Bio-écologie','LCA'];
+const LYCEE_CLASSES=['Seconde','Première','Terminale'];
+const LYCEE_FILIERES=['Générale','Technologique'];
+const TECHNO_SERIES=[['STMG','STMG — Management & gestion'],['STI2D','STI2D — Industrie & dév. durable'],['STL','STL — Laboratoire'],['ST2S','ST2S — Santé & social'],['STD2A','STD2A — Design & arts appliqués'],['STHR','STHR — Hôtellerie-restauration'],['S2TMD','S2TMD — Théâtre-musique-danse']];
+const COLLEGE_CLASSES=['6e','5e','4e','3e'];
+const CPGE_FILIERES=['MPSI','PCSI','PTSI','MP2I','MP','MPI','PC','PSI','PT','BCPST','TSI','TB','TPC','ECG','ECT','A/L (Hypokhâgne/Khâgne)','B/L','D1 (droit-éco)','D2 (éco-gestion)'];
+const FAC_TYPES=['bts','but','licence','licencepro','bachelor','master','ingenieur','commerce','doctorat'];
+const LEVEL_CATS=[['college','Collège'],['lycee','Lycée'],['cpge','Prépa (CPGE)'],['bts','BTS'],['but','BUT'],['licence','Licence'],['licencepro','Licence Pro'],['bachelor','Bachelor'],['master','Master'],['ingenieur',"École d'ingénieur"],['commerce','École de commerce'],['doctorat','Doctorat']];
+function levelCatLabel(c){ const f=LEVEL_CATS.find(x=>x[0]===c); return f?f[1]:''; }
+function levelLabel(L){ if(!L||!L.type) return '';
+  if(L.type==='college') return L.classe||'Collège';
+  if(L.type==='lycee'){ const c=L.classe||'';
+    if(L.filiere==='Technologique') return (c+' '+(L.serie||'Technologique')).trim();
+    if(L.filiere==='Générale'){ let s=(c+' Générale').trim(); if(L.spes&&L.spes.length) s+=' · '+L.spes.join(', '); return s; }
+    return (c+(L.filiere?(' '+L.filiere):'')).trim()||'Lycée'; }
+  if(L.type==='cpge') return ('Prépa '+(L.filiere||'')).trim();
+  return (levelCatLabel(L.type)+(L.domaine?(' '+L.domaine):'')).trim(); }
+function fillLevelSelects(){ const opts=LEVEL_CATS.map(c=>'<option value="'+c[0]+'">'+c[1]+'</option>').join('');
+  if($('lvlType')) $('lvlType').innerHTML='<option value="">Non précisé</option>'+opts;
+  if($('crLevel')) $('crLevel').innerHTML='<option value="">Niveau (optionnel)</option>'+opts;
+  if($('fLevel')) $('fLevel').innerHTML='<option value="">Tous niveaux</option>'+opts; }
 function renderMenuAccount(){
   const cloud=!!(cloudMode&&cloudUser);
   const photo=S.profPhoto||'';
@@ -1177,14 +1393,41 @@ function renderMenuAccount(){
   $('accEmailRow').style.display=cloud?'':'none'; if(cloud)$('accEmailVal').textContent=cloudUser.email||'—';
   $('accTomVal').textContent=(S.tom||0)+' 🍅';
   if(S.profStatus){ $('accStatusRow').style.display=''; $('accStatusVal').textContent=S.profStatus; } else $('accStatusRow').style.display='none';
+  const lv=levelLabel(S.profLevel); if($('accLevelRow')){ if(lv){ $('accLevelRow').style.display=''; $('accLevelVal').textContent=lv; } else $('accLevelRow').style.display='none'; }
 }
 function renderAccEmojis(){ const c=$('accEmojis'); if(!c)return; c.innerHTML=''; EMOJIS.forEach(e=>{const b=document.createElement('button');b.type='button';b.className='emo'+(e===menuEmoji?' on':'');b.textContent=e;b.onclick=()=>{ menuEmoji=e; renderAccEmojis(); applyEmoji(); };c.appendChild(b);}); }
 function applyEmoji(){ if(!cloudMode){ const p=profiles.find(x=>x.id===activeId); if(p){ p.emoji=menuEmoji; saveProfiles(); } } renderMenuAccount(); }
 function openAccEdit(){ const cloud=!!(cloudMode&&cloudUser); menuEmoji=(!cloud&&(profiles.find(x=>x.id===activeId)||{}).emoji)||'🌙';
-  $('accNameInput').value=S.profName||''; $('accStatusInput').value=S.profStatus||''; renderAccEmojis();
+  $('accNameInput').value=S.profName||''; $('accStatusInput').value=S.profStatus||''; renderAccEmojis(); syncLevelForm();
   const lbl=document.querySelector('.acc-edit-lbl'); if(lbl)lbl.style.display=cloud?'none':''; if($('accEmojis'))$('accEmojis').style.display=cloud?'none':'';
   $('accEdit').classList.toggle('open'); }
-function saveAccount(){ S.profName=$('accNameInput').value.trim(); S.profStatus=$('accStatusInput').value.trim(); save();
+let lvlSpesSel=[];
+function lvlOpts(sel,arr,ph){ const e=$(sel); if(!e)return; e.innerHTML='<option value="">'+ph+'</option>'+arr.map(x=>'<option value="'+x+'">'+x+'</option>').join(''); }
+function lvlOptsPairs(sel,pairs,ph){ const e=$(sel); if(!e)return; e.innerHTML='<option value="">'+ph+'</option>'+pairs.map(p=>'<option value="'+p[0]+'">'+p[1]+'</option>').join(''); }
+function renderLvlSpes(){ const box=$('lvlSpes'); if(!box)return; box.innerHTML=''; SPES.forEach(s=>{ const b=document.createElement('button'); b.type='button'; b.className='spe-chip'+(lvlSpesSel.includes(s)?' on':''); b.textContent=s; b.onclick=()=>{ if(lvlSpesSel.includes(s)) lvlSpesSel=lvlSpesSel.filter(x=>x!==s); else lvlSpesSel.push(s); renderLvlSpes(); }; box.appendChild(b); }); }
+function updateLvlVis(){ const t=$('lvlType')?$('lvlType').value:''; const fil=($('lvlFiliere')?$('lvlFiliere').value:'');
+  if($('lvlCollege'))$('lvlCollege').style.display=(t==='college')?'block':'none';
+  if($('lvlLycee'))$('lvlLycee').style.display=(t==='lycee')?'block':'none';
+  if($('lvlCpge'))$('lvlCpge').style.display=(t==='cpge')?'block':'none';
+  if($('lvlFac'))$('lvlFac').style.display=(FAC_TYPES.indexOf(t)>=0)?'block':'none';
+  if($('lvlSpesWrap'))$('lvlSpesWrap').style.display=(t==='lycee'&&fil==='Générale')?'block':'none';
+  if($('lvlSerieWrap'))$('lvlSerieWrap').style.display=(t==='lycee'&&fil==='Technologique')?'block':'none'; }
+function syncLevelForm(){ const L=S.profLevel||{};
+  lvlOpts('lvlClasse',LYCEE_CLASSES,'Classe'); lvlOpts('lvlFiliere',LYCEE_FILIERES,'Filière'); lvlOpts('lvlClasseC',COLLEGE_CLASSES,'Classe'); lvlOptsPairs('lvlSerie',TECHNO_SERIES,'Série techno'); lvlOpts('lvlCpgeFil',CPGE_FILIERES,'Filière (ex : MPSI)');
+  if($('lvlType'))$('lvlType').value=L.type||'';
+  if($('lvlClasse'))$('lvlClasse').value=(L.type==='lycee'?(L.classe||''):'');
+  if($('lvlFiliere'))$('lvlFiliere').value=(L.type==='lycee'?(L.filiere||''):'');
+  if($('lvlSerie'))$('lvlSerie').value=(L.type==='lycee'?(L.serie||''):'');
+  if($('lvlCpgeFil'))$('lvlCpgeFil').value=(L.type==='cpge'?(L.filiere||''):'');
+  if($('lvlClasseC'))$('lvlClasseC').value=(L.type==='college'?(L.classe||''):'');
+  if($('lvlDomaine'))$('lvlDomaine').value=((FAC_TYPES.indexOf(L.type)>=0)?(L.domaine||''):'');
+  lvlSpesSel=(L.type==='lycee'&&Array.isArray(L.spes))?L.spes.slice():[]; renderLvlSpes(); updateLvlVis(); }
+function readLevelForm(){ const t=$('lvlType')?$('lvlType').value:''; if(!t) return null;
+  if(t==='college') return {type:'college',classe:($('lvlClasseC').value||'')};
+  if(t==='lycee'){ const fil=$('lvlFiliere').value||''; return {type:'lycee',classe:($('lvlClasse').value||''),filiere:fil,serie:(fil==='Technologique'?($('lvlSerie').value||''):''),spes:(fil==='Générale'?lvlSpesSel.slice():[])}; }
+  if(t==='cpge') return {type:'cpge',filiere:($('lvlCpgeFil').value||'')};
+  return {type:t,domaine:(($('lvlDomaine').value||'').trim())}; }
+function saveAccount(){ S.profName=$('accNameInput').value.trim(); S.profStatus=$('accStatusInput').value.trim(); S.profLevel=readLevelForm(); save();
   if(!cloudMode){ const p=profiles.find(x=>x.id===activeId); if(p&&S.profName){ p.name=S.profName; saveProfiles(); } }
   renderMenuAccount(); $('accEdit').classList.remove('open'); flash('Compte mis à jour ✓'); }
 function compressAvatar(dataURL){ return new Promise(res=>{ const img=new Image(); img.onload=()=>{ try{ const max=256; let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height; const s=Math.min(max/w,max/h,1); const cw=Math.round(w*s),ch=Math.round(h*s); const cv=document.createElement('canvas'); cv.width=cw; cv.height=ch; cv.getContext('2d').drawImage(img,0,0,cw,ch); res(cv.toDataURL('image/jpeg',.85)); }catch(e){ res(dataURL); } }; img.onerror=()=>res(dataURL); img.src=dataURL; }); }
@@ -1196,6 +1439,9 @@ if($('drawerX')) $('drawerX').onclick=closeDrawer;
 if($('accEditToggle')) $('accEditToggle').onclick=openAccEdit;
 if($('accEditToggle2')) $('accEditToggle2').onclick=openAccEdit;
 if($('accNameSave')) $('accNameSave').onclick=saveAccount;
+if($('lvlType')) $('lvlType').onchange=updateLvlVis;
+if($('lvlFiliere')) $('lvlFiliere').onchange=updateLvlVis;
+if(typeof fillLevelSelects==='function') fillLevelSelects();
 if($('accStatusInput')) $('accStatusInput').onkeydown=e=>{if(e.key==='Enter')saveAccount();};
 if($('accPhotoBtn')) $('accPhotoBtn').onclick=()=>$('accPhotoFile').click();
 if($('accPhotoFile')) $('accPhotoFile').onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(f)setProfPhoto(f); e.target.value=''; };
