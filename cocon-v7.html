@@ -413,11 +413,19 @@
 .rv-fs:active{transform:scale(.92);}
 .pip .bar .bar-btns{display:flex;align-items:center;gap:6px;}
 .pip .bar button{cursor:pointer;}
-  .pip.max{left:0!important;top:0!important;right:0;bottom:0;width:100vw;height:100vh;height:100dvh;border-radius:0;z-index:60;}
-  .pip.max video{width:100%;height:100vh;height:100dvh;object-fit:contain;}
+  .pip.max{position:fixed;left:0!important;right:0!important;top:0!important;bottom:0!important;width:auto;height:auto;border-radius:0;z-index:60;}
+  .pip.max video{width:100%;height:100%;object-fit:contain;}
+  .pip:fullscreen{width:100vw;height:100vh;border-radius:0;background:#000;}
+  .pip:-webkit-full-screen{width:100vw;height:100vh;border-radius:0;background:#000;}
+  .pip:fullscreen video{width:100%;height:100%;object-fit:contain;}
+  .pip:-webkit-full-screen video{width:100%;height:100%;object-fit:contain;}
   .pip.max .bar{cursor:default;background:linear-gradient(rgba(0,0,0,.75),transparent);}
-  .rv.max{position:fixed;left:0;top:0;width:100vw;height:100vh;height:100dvh;border-radius:0;z-index:60;}
-  .rv.max video{width:100%;height:100vh;height:100dvh;object-fit:contain;}
+  .rv.max{position:fixed;left:0!important;right:0!important;top:0!important;bottom:0!important;width:auto;height:auto;border-radius:0;z-index:60;}
+  .rv.max video{width:100%;height:100%;object-fit:contain;}
+  .rv:fullscreen{width:100vw;height:100vh;background:#000;}
+  .rv:-webkit-full-screen{width:100vw;height:100vh;background:#000;}
+  .rv:fullscreen video{width:100%;height:100%;object-fit:contain;}
+  .rv:-webkit-full-screen video{width:100%;height:100%;object-fit:contain;}
   .rv.max .rv-fs{top:max(10px,env(safe-area-inset-top));right:12px;}
 
   .scrim{position:fixed;inset:0;z-index:45;background:rgba(5,3,12,.5);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:.25s;}
@@ -1158,7 +1166,7 @@ function placePip(el,corner){ const w=el.offsetWidth||220,pad=14; const bottomBa
 /* drag pips */
 document.querySelectorAll('.pip .bar').forEach(bar=>{
   let sx,sy,ox,oy,drag=false; const pip=bar.parentElement;
-  const down=e=>{ if(e.target.closest('button'))return; if(pip.classList.contains('max'))return; drag=true; const p=e.touches?e.touches[0]:e; sx=p.clientX;sy=p.clientY; const r=pip.getBoundingClientRect(); ox=r.left;oy=r.top; pip.style.left=ox+'px';pip.style.top=oy+'px';pip.style.right='';pip.style.bottom=''; e.preventDefault(); };
+  const down=e=>{ if(e.target.closest('button'))return; if(pip.classList.contains('max')||document.fullscreenElement===pip||document.webkitFullscreenElement===pip)return; drag=true; const p=e.touches?e.touches[0]:e; sx=p.clientX;sy=p.clientY; const r=pip.getBoundingClientRect(); ox=r.left;oy=r.top; pip.style.left=ox+'px';pip.style.top=oy+'px';pip.style.right='';pip.style.bottom=''; e.preventDefault(); };
   const move=e=>{ if(!drag)return; const p=e.touches?e.touches[0]:e; let nx=ox+(p.clientX-sx),ny=oy+(p.clientY-sy);
     nx=Math.max(4,Math.min(innerWidth-pip.offsetWidth-4,nx)); ny=Math.max(4,Math.min(innerHeight-pip.offsetHeight-4,ny)); pip.style.left=nx+'px';pip.style.top=ny+'px'; };
   const up=()=>drag=false;
@@ -1376,17 +1384,21 @@ function updateShareToMesh(){ if(!inClass) return; const tr=currentShareTrack();
 function stopShareToMesh(){ for(const pid in peers){ const P=peers[pid]; if(P.vSender){ try{P.pc.removeTrack(P.vSender);}catch(e){} P.vSender=null; } } shareKind=null; }
 
 /* ---- tuiles vidéo distantes (avec nom) ---- */
-function toggleMax(el){ if(!el)return; el.classList.toggle('max'); }
+function toggleMax(el){ if(!el)return;
+  if(el.classList.contains('max')){ el.classList.remove('max'); return; }
+  const fsEl=document.fullscreenElement||document.webkitFullscreenElement;
+  if(fsEl===el){ if(document.exitFullscreen)document.exitFullscreen(); else if(document.webkitExitFullscreen)document.webkitExitFullscreen(); return; }
+  const req=el.requestFullscreen||el.webkitRequestFullscreen;
+  if(req){ try{ const r=req.call(el); if(r&&r.catch)r.catch(()=>el.classList.add('max')); return; }catch(e){} }
+  el.classList.add('max'); }
 function addRemoteTile(pid,stream){ const stage=$('remoteStage'); if(!stage)return; let t=document.getElementById('rv-'+pid);
   if(!t){ t=document.createElement('div'); t.className='rv'; t.id='rv-'+pid; t.innerHTML='<video autoplay playsinline></video><small></small><button class="rv-fs" type="button" aria-label="Agrandir">⛶</button>'; stage.appendChild(t); const fb=t.querySelector('.rv-fs'); if(fb) fb.onclick=(e)=>{ e.stopPropagation(); toggleMax(t); }; const vv=t.querySelector('video'); if(vv) vv.ondblclick=()=>toggleMax(t); }
   const v=t.querySelector('video'); v.srcObject=stream; if(v.play) v.play().catch(()=>{});
   updateTileLabel(pid, nameOf(pid)); stage.classList.add('show'); }
 function removeRemoteTile(pid){ const t=document.getElementById('rv-'+pid); if(t) t.remove(); const stage=$('remoteStage'); if(stage&&!stage.children.length) stage.classList.remove('show'); }
 function updateTileLabel(pid,name){ const t=document.getElementById('rv-'+pid); if(t){ const s=t.querySelector('small'); if(s) s.textContent=name||'Invité'; } }
-if($('screenFs')) $('screenFs').onclick=()=>toggleMax($('screenPip'));
-if($('camFs')) $('camFs').onclick=()=>toggleMax($('camPip'));
-if($('camVid')) $('camVid').ondblclick=()=>toggleMax($('camPip'));
-if($('screenVid')) $('screenVid').ondblclick=()=>toggleMax($('screenPip'));
+document.addEventListener('click', e=>{ if(!e.target.closest)return; const b=e.target.closest('.rv-fs,#camFs,#screenFs'); if(b){ e.preventDefault(); e.stopPropagation(); const box=b.closest('.pip,.rv'); if(box) toggleMax(box); } });
+document.addEventListener('dblclick', e=>{ if(!e.target.closest)return; const v=e.target.closest('.pip video,.rv video'); if(v){ const box=v.closest('.pip,.rv'); if(box) toggleMax(box); } });
 
 /* ---- menu / boutons ---- */
 if($('navCreate')) $('navCreate').onclick=()=>{ if(!isCloud()){ flash('Connecte-toi à un compte cloud pour créer une classe'); return; } closeDrawer(); openPanel('create'); };
