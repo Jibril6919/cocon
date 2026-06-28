@@ -192,7 +192,7 @@
   .pip.cam video{transform:scaleX(-1);}
   .pip .bar{position:absolute;top:0;left:0;right:0;height:30px;background:linear-gradient(rgba(0,0,0,.55),transparent);display:flex;align-items:center;justify-content:space-between;padding:0 8px;cursor:grab;}
   .pip .bar small{font-size:10.5px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);}
-  .pip .bar button{background:rgba(0,0,0,.4);border:none;color:#fff;width:20px;height:20px;border-radius:50%;font-size:12px;}
+  .pip .bar button{background:rgba(0,0,0,.4);border:none;color:#fff;width:22px;height:22px;border-radius:50%;font-size:13px;display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer;}
 
   /* nav drawer (reserved/left) */
   .drawer{position:fixed;left:0;top:0;height:100%;width:min(300px,86vw);z-index:50;background:rgba(18,13,28,.96);
@@ -789,8 +789,8 @@
 </div>
 
 <!-- PiP -->
-<div class="pip cam" id="camPip"><div class="bar"><small>Caméra</small><span class="bar-btns"><button id="camFs" type="button" aria-label="Plein écran">⛶</button><button id="camClose">×</button></span></div><video id="camVid" autoplay playsinline muted></video></div>
-<div class="pip" id="screenPip"><div class="bar"><small>Écran</small><span class="bar-btns"><button id="screenFs" type="button" aria-label="Plein écran">⛶</button><button id="screenClose">×</button></span></div><video id="screenVid" autoplay playsinline muted></video></div>
+<div class="pip cam" id="camPip"><div class="bar"><small>Caméra</small><span class="bar-btns"><button id="camFs" type="button" aria-label="Plein écran"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></button><button id="camClose">×</button></span></div><video id="camVid" autoplay playsinline muted></video></div>
+<div class="pip" id="screenPip"><div class="bar"><small>Écran</small><span class="bar-btns"><button id="screenFs" type="button" aria-label="Plein écran"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></button><button id="screenClose">×</button></span></div><video id="screenVid" autoplay playsinline muted></video></div>
 
 <div class="remote-stage" id="remoteStage"></div>
 <div class="cls-pill" id="clsPill"><span class="cls-dot"></span><span class="cls-txt">Classe</span> · <b id="clsPillN">1</b></div>
@@ -1160,19 +1160,29 @@ async function toggleScreen(){
 }
 $('camBtn').onclick=toggleCam; $('screenBtn').onclick=toggleScreen;
 $('camClose').onclick=toggleCam; $('screenClose').onclick=toggleScreen;
-function placePip(el,corner){ const w=el.offsetWidth||220,pad=14; const bottomBase=120;
-  if(corner==='br'){ el.style.right=pad+'px'; el.style.bottom=(bottomBase)+'px'; el.style.left=''; el.style.top=''; }
-  else { el.style.right=pad+'px'; el.style.top='70px'; el.style.bottom=''; el.style.left=''; } }
+function placePip(el,corner){ const pad=14;
+  if(corner==='br'){ el.style.left=pad+'px'; el.style.right='auto'; el.style.bottom='max(14px,env(safe-area-inset-bottom,14px))'; el.style.top='auto'; }
+  else { el.style.left=pad+'px'; el.style.right='auto'; el.style.top='calc(env(safe-area-inset-top,0px) + 108px)'; el.style.bottom='auto'; } }
 /* drag pips */
 document.querySelectorAll('.pip .bar').forEach(bar=>{
-  let sx,sy,ox,oy,drag=false; const pip=bar.parentElement;
-  const down=e=>{ if(e.target.closest('button'))return; if(pip.classList.contains('max')||document.fullscreenElement===pip||document.webkitFullscreenElement===pip)return; drag=true; const p=e.touches?e.touches[0]:e; sx=p.clientX;sy=p.clientY; const r=pip.getBoundingClientRect(); ox=r.left;oy=r.top; pip.style.left=ox+'px';pip.style.top=oy+'px';pip.style.right='';pip.style.bottom=''; e.preventDefault(); };
-  const move=e=>{ if(!drag)return; const p=e.touches?e.touches[0]:e; let nx=ox+(p.clientX-sx),ny=oy+(p.clientY-sy);
-    nx=Math.max(4,Math.min(innerWidth-pip.offsetWidth-4,nx)); ny=Math.max(4,Math.min(innerHeight-pip.offsetHeight-4,ny)); pip.style.left=nx+'px';pip.style.top=ny+'px'; };
-  const up=()=>drag=false;
-  bar.addEventListener('mousedown',down); bar.addEventListener('touchstart',down,{passive:false});
-  addEventListener('mousemove',move); addEventListener('touchmove',move,{passive:false});
-  addEventListener('mouseup',up); addEventListener('touchend',up);
+  const pip=bar.parentElement; let drag=false,sx,sy,ox,oy,pid=null;
+  bar.addEventListener('pointerdown',e=>{
+    if(e.target.closest('button'))return;
+    if(pip.classList.contains('max')||document.fullscreenElement===pip||document.webkitFullscreenElement===pip)return;
+    drag=true; pid=e.pointerId; try{bar.setPointerCapture(pid);}catch(_){}
+    sx=e.clientX; sy=e.clientY; const r=pip.getBoundingClientRect(); ox=r.left; oy=r.top;
+    pip.style.left=ox+'px'; pip.style.top=oy+'px'; pip.style.right='auto'; pip.style.bottom='auto';
+    e.preventDefault();
+  });
+  bar.addEventListener('pointermove',e=>{
+    if(!drag)return;
+    let nx=ox+(e.clientX-sx), ny=oy+(e.clientY-sy);
+    nx=Math.max(4,Math.min(innerWidth-pip.offsetWidth-4,nx));
+    ny=Math.max(4,Math.min(innerHeight-pip.offsetHeight-4,ny));
+    pip.style.left=nx+'px'; pip.style.top=ny+'px';
+  });
+  const end=()=>{ if(!drag)return; drag=false; try{bar.releasePointerCapture(pid);}catch(_){} };
+  bar.addEventListener('pointerup',end); bar.addEventListener('pointercancel',end);
 });
 
 /* ===================== TASKS ===================== */
@@ -1392,7 +1402,7 @@ function toggleMax(el){ if(!el)return;
   if(req){ try{ const r=req.call(el); if(r&&r.catch)r.catch(()=>el.classList.add('max')); return; }catch(e){} }
   el.classList.add('max'); }
 function addRemoteTile(pid,stream){ const stage=$('remoteStage'); if(!stage)return; let t=document.getElementById('rv-'+pid);
-  if(!t){ t=document.createElement('div'); t.className='rv'; t.id='rv-'+pid; t.innerHTML='<video autoplay playsinline></video><small></small><button class="rv-fs" type="button" aria-label="Agrandir">⛶</button>'; stage.appendChild(t); const fb=t.querySelector('.rv-fs'); if(fb) fb.onclick=(e)=>{ e.stopPropagation(); toggleMax(t); }; const vv=t.querySelector('video'); if(vv) vv.ondblclick=()=>toggleMax(t); }
+  if(!t){ t=document.createElement('div'); t.className='rv'; t.id='rv-'+pid; t.innerHTML='<video autoplay playsinline></video><small></small><button class="rv-fs" type="button" aria-label="Agrandir"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></button>'; stage.appendChild(t); const fb=t.querySelector('.rv-fs'); if(fb) fb.onclick=(e)=>{ e.stopPropagation(); toggleMax(t); }; const vv=t.querySelector('video'); if(vv) vv.ondblclick=()=>toggleMax(t); }
   const v=t.querySelector('video'); v.srcObject=stream; if(v.play) v.play().catch(()=>{});
   updateTileLabel(pid, nameOf(pid)); stage.classList.add('show'); }
 function removeRemoteTile(pid){ const t=document.getElementById('rv-'+pid); if(t) t.remove(); const stage=$('remoteStage'); if(stage&&!stage.children.length) stage.classList.remove('show'); }
