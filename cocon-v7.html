@@ -187,7 +187,7 @@
 
   /* PiP videos */
   .pip{position:fixed;z-index:35;width:220px;border-radius:16px;overflow:hidden;background:#000;box-shadow:0 14px 40px -10px rgba(0,0,0,.7);border:1px solid var(--line);display:none;touch-action:none;}
-  @media (max-width:520px){ .pip{width:180px;} }
+  @media (max-width:640px){ .pip{width:150px;} }
   .pip.show{display:block;}
   .pip video{width:100%;display:block;background:#000;}
   .pip.cam video{transform:scaleX(-1);}
@@ -1161,9 +1161,15 @@ async function toggleScreen(){
 }
 $('camBtn').onclick=toggleCam; $('screenBtn').onclick=toggleScreen;
 $('camClose').onclick=toggleCam; $('screenClose').onclick=toggleScreen;
-function placePip(el,corner){ const pad=14;
-  if(corner==='br'){ el.style.left=pad+'px'; el.style.right='auto'; el.style.bottom='max(14px,env(safe-area-inset-bottom,14px))'; el.style.top='auto'; }
-  else { el.style.left=pad+'px'; el.style.right='auto'; el.style.top='calc(env(safe-area-inset-top,0px) + 108px)'; el.style.bottom='auto'; } }
+function placePip(el,corner){ const pad=14; const phone=innerWidth<=640;
+  if(phone){ /* tél: dock + média en bas → pips en haut (zone libre), sous les pastilles */
+    const t='calc(env(safe-area-inset-top,0px) + 104px)';
+    if(corner==='br'){ el.style.left=pad+'px'; el.style.right='auto'; el.style.top=t; el.style.bottom='auto'; }   /* caméra haut-gauche */
+    else { el.style.right=pad+'px'; el.style.left='auto'; el.style.top=t; el.style.bottom='auto'; }               /* écran haut-droite */
+  } else { /* PC: dock à droite → pips à gauche */
+    if(corner==='br'){ el.style.left=pad+'px'; el.style.right='auto'; el.style.bottom='max(14px,env(safe-area-inset-bottom,14px))'; el.style.top='auto'; }
+    else { el.style.left=pad+'px'; el.style.right='auto'; el.style.top='calc(env(safe-area-inset-top,0px) + 108px)'; el.style.bottom='auto'; }
+  } }
 /* drag pips */
 document.querySelectorAll('.pip .bar').forEach(bar=>{
   const pip=bar.parentElement; let drag=false,sx,sy,ox,oy,pid=null;
