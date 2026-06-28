@@ -413,6 +413,12 @@
 .rv-fs:active{transform:scale(.92);}
 .pip .bar .bar-btns{display:flex;align-items:center;gap:6px;}
 .pip .bar button{cursor:pointer;}
+  .pip.max{left:0!important;top:0!important;right:0;bottom:0;width:100vw;height:100vh;height:100dvh;border-radius:0;z-index:60;}
+  .pip.max video{width:100%;height:100vh;height:100dvh;object-fit:contain;}
+  .pip.max .bar{cursor:default;background:linear-gradient(rgba(0,0,0,.75),transparent);}
+  .rv.max{position:fixed;left:0;top:0;width:100vw;height:100vh;height:100dvh;border-radius:0;z-index:60;}
+  .rv.max video{width:100%;height:100vh;height:100dvh;object-fit:contain;}
+  .rv.max .rv-fs{top:max(10px,env(safe-area-inset-top));right:12px;}
 
   .scrim{position:fixed;inset:0;z-index:45;background:rgba(5,3,12,.5);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:.25s;}
   .scrim.show{opacity:1;pointer-events:auto;}
@@ -1130,17 +1136,17 @@ $('ytVol').oninput=e=>{S.ytVol=+e.target.value;if(ytReady&&ytPlayer)ytPlayer.set
 /* ===================== CAMERA + SCREEN SHARE (aperçu local) ===================== */
 let camStream=null,screenStream=null;
 async function toggleCam(){
-  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; $('camPip').classList.remove('show'); $('camBtn').classList.remove('active','live'); if(typeof updateShareToMesh==='function')updateShareToMesh(); return; }
+  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; $('camPip').classList.remove('show','max'); $('camBtn').classList.remove('active','live'); if(typeof updateShareToMesh==='function')updateShareToMesh(); return; }
   try{ camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
     $('camVid').srcObject=camStream; $('camPip').classList.add('show'); $('camBtn').classList.add('active','live'); placePip($('camPip'),'br'); if(typeof updateShareToMesh==='function')updateShareToMesh(); if(typeof inClass!=='undefined'&&inClass)flash('Caméra partagée avec la classe 📷'); }
   catch(e){ flash('Caméra refusée ou indisponible'); }
 }
 async function toggleScreen(){
-  if(screenStream){ screenStream.getTracks().forEach(t=>t.stop()); screenStream=null; $('screenPip').classList.remove('show'); $('screenBtn').classList.remove('active','live'); if(typeof updateShareToMesh==='function')updateShareToMesh(); return; }
+  if(screenStream){ screenStream.getTracks().forEach(t=>t.stop()); screenStream=null; $('screenPip').classList.remove('show','max'); $('screenBtn').classList.remove('active','live'); if(typeof updateShareToMesh==='function')updateShareToMesh(); return; }
   if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){ flash('Partage d\'écran non dispo sur ce navigateur'); return; }
   try{ screenStream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
     $('screenVid').srcObject=screenStream; $('screenPip').classList.add('show'); $('screenBtn').classList.add('active','live'); placePip($('screenPip'),'tr');
-    screenStream.getVideoTracks()[0].onended=()=>{ screenStream=null; $('screenPip').classList.remove('show'); $('screenBtn').classList.remove('active','live'); if(typeof updateShareToMesh==='function')updateShareToMesh(); };
+    screenStream.getVideoTracks()[0].onended=()=>{ screenStream=null; $('screenPip').classList.remove('show','max'); $('screenBtn').classList.remove('active','live'); if(typeof updateShareToMesh==='function')updateShareToMesh(); };
     if(typeof updateShareToMesh==='function')updateShareToMesh(); if(typeof inClass!=='undefined'&&inClass)flash('Écran partagé avec la classe 🖥️'); }
   catch(e){ if(e&&e.name!=='NotAllowedError') flash('Partage impossible'); }
 }
@@ -1152,7 +1158,7 @@ function placePip(el,corner){ const w=el.offsetWidth||220,pad=14; const bottomBa
 /* drag pips */
 document.querySelectorAll('.pip .bar').forEach(bar=>{
   let sx,sy,ox,oy,drag=false; const pip=bar.parentElement;
-  const down=e=>{ if(e.target.closest('button'))return; drag=true; const p=e.touches?e.touches[0]:e; sx=p.clientX;sy=p.clientY; const r=pip.getBoundingClientRect(); ox=r.left;oy=r.top; pip.style.left=ox+'px';pip.style.top=oy+'px';pip.style.right='';pip.style.bottom=''; e.preventDefault(); };
+  const down=e=>{ if(e.target.closest('button'))return; if(pip.classList.contains('max'))return; drag=true; const p=e.touches?e.touches[0]:e; sx=p.clientX;sy=p.clientY; const r=pip.getBoundingClientRect(); ox=r.left;oy=r.top; pip.style.left=ox+'px';pip.style.top=oy+'px';pip.style.right='';pip.style.bottom=''; e.preventDefault(); };
   const move=e=>{ if(!drag)return; const p=e.touches?e.touches[0]:e; let nx=ox+(p.clientX-sx),ny=oy+(p.clientY-sy);
     nx=Math.max(4,Math.min(innerWidth-pip.offsetWidth-4,nx)); ny=Math.max(4,Math.min(innerHeight-pip.offsetHeight-4,ny)); pip.style.left=nx+'px';pip.style.top=ny+'px'; };
   const up=()=>drag=false;
@@ -1370,17 +1376,17 @@ function updateShareToMesh(){ if(!inClass) return; const tr=currentShareTrack();
 function stopShareToMesh(){ for(const pid in peers){ const P=peers[pid]; if(P.vSender){ try{P.pc.removeTrack(P.vSender);}catch(e){} P.vSender=null; } } shareKind=null; }
 
 /* ---- tuiles vidéo distantes (avec nom) ---- */
-function videoFullscreen(v){ if(!v)return; try{ if(v.requestFullscreen) v.requestFullscreen(); else if(v.webkitRequestFullscreen) v.webkitRequestFullscreen(); else if(v.webkitEnterFullscreen) v.webkitEnterFullscreen(); else if(v.webkitSetPresentationMode) v.webkitSetPresentationMode('fullscreen'); }catch(e){ try{ if(v.webkitEnterFullscreen) v.webkitEnterFullscreen(); }catch(_){} } }
+function toggleMax(el){ if(!el)return; el.classList.toggle('max'); }
 function addRemoteTile(pid,stream){ const stage=$('remoteStage'); if(!stage)return; let t=document.getElementById('rv-'+pid);
-  if(!t){ t=document.createElement('div'); t.className='rv'; t.id='rv-'+pid; t.innerHTML='<video autoplay playsinline></video><small></small><button class="rv-fs" type="button" aria-label="Plein écran">⛶</button>'; stage.appendChild(t); const fb=t.querySelector('.rv-fs'); if(fb) fb.onclick=(e)=>{ e.stopPropagation(); videoFullscreen(t.querySelector('video')); }; }
+  if(!t){ t=document.createElement('div'); t.className='rv'; t.id='rv-'+pid; t.innerHTML='<video autoplay playsinline></video><small></small><button class="rv-fs" type="button" aria-label="Agrandir">⛶</button>'; stage.appendChild(t); const fb=t.querySelector('.rv-fs'); if(fb) fb.onclick=(e)=>{ e.stopPropagation(); toggleMax(t); }; const vv=t.querySelector('video'); if(vv) vv.ondblclick=()=>toggleMax(t); }
   const v=t.querySelector('video'); v.srcObject=stream; if(v.play) v.play().catch(()=>{});
   updateTileLabel(pid, nameOf(pid)); stage.classList.add('show'); }
 function removeRemoteTile(pid){ const t=document.getElementById('rv-'+pid); if(t) t.remove(); const stage=$('remoteStage'); if(stage&&!stage.children.length) stage.classList.remove('show'); }
 function updateTileLabel(pid,name){ const t=document.getElementById('rv-'+pid); if(t){ const s=t.querySelector('small'); if(s) s.textContent=name||'Invité'; } }
-if($('screenFs')) $('screenFs').onclick=()=>videoFullscreen($('screenVid'));
-if($('camFs')) $('camFs').onclick=()=>videoFullscreen($('camVid'));
-if($('camVid')) $('camVid').ondblclick=()=>videoFullscreen($('camVid'));
-if($('screenVid')) $('screenVid').ondblclick=()=>videoFullscreen($('screenVid'));
+if($('screenFs')) $('screenFs').onclick=()=>toggleMax($('screenPip'));
+if($('camFs')) $('camFs').onclick=()=>toggleMax($('camPip'));
+if($('camVid')) $('camVid').ondblclick=()=>toggleMax($('camPip'));
+if($('screenVid')) $('screenVid').ondblclick=()=>toggleMax($('screenPip'));
 
 /* ---- menu / boutons ---- */
 if($('navCreate')) $('navCreate').onclick=()=>{ if(!isCloud()){ flash('Connecte-toi à un compte cloud pour créer une classe'); return; } closeDrawer(); openPanel('create'); };
