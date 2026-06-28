@@ -488,6 +488,10 @@
     .topL .tom{display:none;}
   }
   @media(prefers-reduced-motion:reduce){.sun,.star{animation:none;}#rainC{display:none;}}
+
+  .panel-full{left:0;right:0;top:0;bottom:0;width:100vw;max-width:100vw;height:100%;max-height:100%;border-radius:0;
+    padding:max(20px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));transform:translateY(16px);overflow-y:auto;}
+  .panel-full.open{transform:translateY(0);}
 </style>
 </head>
 <body data-mode="focus">
@@ -616,7 +620,7 @@
   <p class="hint">Sur mobile : choisis une photo de ta galerie. Les fonds sont gardés sur l'appareil ; « Modifier » pour en supprimer.</p>
 </div>
 
-<div class="panel" id="panel-settings">
+<div class="panel panel-full" id="panel-settings">
   <h3>⚙️ Paramètres</h3>
   <div class="acct">
     <div class="acct-cur" id="acctName">🌙 Moi</div>
@@ -630,7 +634,36 @@
   <p class="hint">Nom, tâches, réglages et fond sont sauvegardés et reviennent à ta prochaine visite. La salle ne disparaît que si tu la vides.</p>
 </div>
 
-<div class="panel panel-wide" id="panel-classset">
+<div class="panel panel-wide panel-full" id="panel-create">
+    <h3>👥 Créer une classe</h3>
+    <input id="crName" maxlength="30" placeholder="Nom de la classe" class="cls-srch-in"/>
+    <label class="cr-toggle"><input type="checkbox" id="crPrivate"/> <span>Privée (avec mot de passe)</span></label>
+    <div id="crPassWrap" style="display:none"><input id="crPass" maxlength="40" placeholder="Mot de passe" class="cls-srch-in"/></div>
+    <input id="crSubject" maxlength="30" placeholder="Matière (optionnel, ex : Maths)" class="cls-srch-in"/>
+    <select id="crLevel" class="lvl-sel">
+      <option value="">Niveau (optionnel)</option>
+      <option value="college">Collège</option>
+      <option value="lycee">Lycée</option>
+      <option value="licence">Licence</option>
+      <option value="master">Master</option>
+      <option value="doctorat">Doctorat</option>
+    </select>
+    <div class="cr-tlabel">Minuteur de la classe (appliqué à tous)</div>
+    <div class="cr-tseg">
+      <button type="button" class="crt on" data-t="25/5">🍅 25/5</button>
+      <button type="button" class="crt" data-t="50/10">🍅 50/10</button>
+      <button type="button" class="crt" data-t="chrono">⏱️ Chrono</button>
+    </div>
+    <button class="mp-x" id="crCreate" type="button">Créer la classe</button>
+    <button class="mp-cancel" id="crCancel" type="button">Annuler</button>
+  </div>
+
+<div class="panel panel-full" id="panel-about">
+    <h4>🌙 Cocon</h4>
+    Ta salle d'étude cozy : Pomodoro, ambiance lofi, musique, sons, tâches et fonds — avec compte cloud synchronisé. Fait avec ☕ par Jibril.
+  </div>
+
+<div class="panel panel-wide panel-full" id="panel-classset">
   <h3>⚙️ Réglages de la classe</h3>
   <input id="csName" maxlength="30" placeholder="Nom de la classe" class="cls-srch-in"/>
   <label class="cr-toggle"><input type="checkbox" id="csPrivate"/> <span>Privée (mot de passe)</span></label>
@@ -650,20 +683,16 @@
     <button type="button" class="cst" data-t="50/10">🍅 50/10</button>
     <button type="button" class="cst" data-t="chrono">⏱️ Chrono</button>
   </div>
-  <div class="cr-tlabel">Image de fond de la classe</div>
-  <div class="cs-cover empty" id="csCoverPrev">Aucune image</div>
-  <label class="cs-coverpick">📷 Choisir une image<input type="file" id="csCoverFile" accept="image/*" style="display:none"/></label>
-  <button class="cs-coverdel" id="csCoverDel" type="button" style="display:none">Retirer l'image</button>
   <button class="mp-x" id="csSave" type="button">Enregistrer</button>
   <button class="mp-cancel" id="csCancel" type="button">Fermer</button>
 </div>
 
-<div class="panel panel-wide" id="panel-myclasses">
+<div class="panel panel-wide panel-full" id="panel-myclasses">
   <h3>📚 Mes classes</h3>
   <div class="myc-grid" id="mycGrid"></div>
 </div>
 
-<div class="panel panel-wide" id="panel-friends">
+<div class="panel panel-wide panel-full" id="panel-friends">
   <h3>🤝 Amis</h3>
   <div class="fr-mycode" id="frMyCode">Ton code ami : —</div>
   <input id="frSearchIn" placeholder="Chercher par nom ou code…" class="cls-srch-in"/>
@@ -673,7 +702,7 @@
   <div id="frList"></div>
 </div>
 
-<div class="panel panel-wide" id="panel-search">
+<div class="panel panel-wide panel-full" id="panel-search">
   <h3>🔎 Rejoindre une classe</h3>
   <input id="searchInput" placeholder="Rechercher par nom…" class="cls-srch-in"/>
   <div class="srch-filters">
@@ -811,29 +840,7 @@
   <button class="navrow" id="navCreate" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Créer une classe</button>
   <button class="navrow" id="navSearch" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>Rejoindre une classe</button>
   <button class="navrow" id="navFriendClasses" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Classes des amis</button>
-  <div class="mp-box" id="mpCreate">
-    <h4>Créer une classe</h4>
-    <input id="crName" maxlength="30" placeholder="Nom de la classe" class="cls-srch-in"/>
-    <label class="cr-toggle"><input type="checkbox" id="crPrivate"/> <span>Privée (avec mot de passe)</span></label>
-    <div id="crPassWrap" style="display:none"><input id="crPass" maxlength="40" placeholder="Mot de passe" class="cls-srch-in"/></div>
-    <input id="crSubject" maxlength="30" placeholder="Matière (optionnel, ex : Maths)" class="cls-srch-in"/>
-    <select id="crLevel" class="lvl-sel">
-      <option value="">Niveau (optionnel)</option>
-      <option value="college">Collège</option>
-      <option value="lycee">Lycée</option>
-      <option value="licence">Licence</option>
-      <option value="master">Master</option>
-      <option value="doctorat">Doctorat</option>
-    </select>
-    <div class="cr-tlabel">Minuteur de la classe (appliqué à tous)</div>
-    <div class="cr-tseg">
-      <button type="button" class="crt on" data-t="25/5">🍅 25/5</button>
-      <button type="button" class="crt" data-t="50/10">🍅 50/10</button>
-      <button type="button" class="crt" data-t="chrono">⏱️ Chrono</button>
-    </div>
-    <button class="mp-x" id="crCreate" type="button">Créer la classe</button>
-    <button class="mp-cancel" id="crCancel" type="button">Annuler</button>
-  </div>
+  
   <div class="mp-box" id="mpBox">
     <h4>Rejoindre une classe</h4>
     <p style="font-size:12px;color:var(--muted);margin-bottom:8px;">La recherche s'ouvre en grand.</p>
@@ -846,10 +853,7 @@
   <button class="navrow" id="navReport" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="12" y="6" width="3" height="11"/><rect x="17" y="13" width="3" height="4"/></svg>Rapport de révision</button>
   <button class="navrow" id="navSettings" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Paramètres</button>
   <button class="navrow" id="navAbout" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>À propos</button>
-  <div class="about-box" id="aboutBox">
-    <h4>🌙 Cocon</h4>
-    Ta salle d'étude cozy : Pomodoro, ambiance lofi, musique, sons, tâches et fonds — avec compte cloud synchronisé. Fait avec ☕ par Jibril.
-  </div>
+  
 
   <div style="flex:1"></div>
   <div class="drawer-foot">Cocon · ta salle d'étude</div>
@@ -1222,7 +1226,7 @@ async function classCreate(name,isPublic,pass,timer,subject,level){
   name=(name||'').trim(); if(name.length<2){ flash('Donne un nom (2 caractères min)'); return; }
   if(!isPublic && (pass||'').length<1){ flash('Mets un mot de passe pour une classe privée'); return; }
   timer=timer||'25/5'; const code=genCode();
-  const row={code,name,is_public:!!isPublic,pass:(isPublic?null:hashStr(pass||'')),creator:myUid(),timer,subject:(subject||null),level:(level||null)};
+  const bg=await bgCoverThumb(); const row={code,name,is_public:!!isPublic,pass:(isPublic?null:hashStr(pass||'')),creator:myUid(),timer,subject:(subject||null),level:(level||null),cover:bg.cover,thumb:bg.thumb};
   flash('Création…');
   try{ const r=await sbAuth('/rest/v1/classes',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(row)});
     if(!r.ok){ const t=await r.text().catch(()=>''); flash((t.indexOf('does not exist')>=0||t.indexOf('relation')>=0||t.indexOf('column')>=0)?'Table « classes » à mettre à jour (voir SQL)':'Création impossible'); return; }
@@ -1238,7 +1242,7 @@ async function classSearch(){
   let qs=[]; if(term)qs.push('name=ilike.*'+encodeURIComponent(term)+'*'); if(subj)qs.push('subject=ilike.*'+encodeURIComponent(subj)+'*'); if(lvl)qs.push('level=eq.'+encodeURIComponent(lvl)); if(tim)qs.push('timer=eq.'+encodeURIComponent(tim));
   const q=qs.length?(qs.join('&')+'&'):'';
   let rows=[];
-  try{ let r=await sbAuth('/rest/v1/classes?'+q+'select=code,name,is_public,timer,subject,level,cover&order=created_at.desc&limit=60');
+  try{ let r=await sbAuth('/rest/v1/classes?'+q+'select=code,name,is_public,timer,subject,level,thumb&order=created_at.desc&limit=60');
     if(!r.ok){ const q2=term?('name=ilike.*'+encodeURIComponent(term)+'*&'):''; r=await sbAuth('/rest/v1/classes?'+q2+'select=code,name,is_public&order=created_at.desc&limit=60'); }
     if(r.ok) rows=await r.json().catch(()=>[]); }catch(e){}
   if(!box) return;
@@ -1253,7 +1257,7 @@ async function classSearch(){
   box.innerHTML='';
   rows.forEach(c=>{ const el=document.createElement('div'); el.className='sr-row';
     let badges=''; if(c._n>0) badges+='<span class="sr-pop">👤 '+c._n+'</span>'; if(!c.is_public) badges+='<span class="sr-b">🔒</span>'; if(c.subject) badges+='<span class="sr-b">'+c.subject+'</span>'; if(c.level) badges+='<span class="sr-b">'+levelCatLabel(c.level)+'</span>'; badges+='<span class="sr-t">'+timerLabel(c.timer)+'</span>';
-    const thumb = c.cover ? ('<span class="sr-cover" style="background-image:url('+c.cover+')"></span>') : ('<span class="sr-ic">'+(c.is_public?'🌐':'🔒')+'</span>');
+    const thumb = c.thumb ? ('<span class="sr-cover" style="background-image:url('+c.thumb+')"></span>') : ('<span class="sr-ic">'+(c.is_public?'🌐':'🔒')+'</span>');
     el.innerHTML='<div class="sr-main">'+thumb+'<span class="sr-nm">'+c.name+'</span><button class="sr-join" type="button">Rejoindre</button></div><div class="sr-badges">'+badges+'</div>';
     el.querySelector('.sr-join').onclick=()=>joinFromSearch(c);
     box.appendChild(el); });
@@ -1370,7 +1374,7 @@ function removeRemoteTile(pid){ const t=document.getElementById('rv-'+pid); if(t
 function updateTileLabel(pid,name){ const t=document.getElementById('rv-'+pid); if(t){ const s=t.querySelector('small'); if(s) s.textContent=name||'Invité'; } }
 
 /* ---- menu / boutons ---- */
-if($('navCreate')) $('navCreate').onclick=()=>{ if(!isCloud()){ flash('Connecte-toi à un compte cloud pour créer une classe'); return; } $('mpCreate').classList.add('open'); };
+if($('navCreate')) $('navCreate').onclick=()=>{ if(!isCloud()){ flash('Connecte-toi à un compte cloud pour créer une classe'); return; } closeDrawer(); openPanel('create'); };
 if($('navSearch')) $('navSearch').onclick=()=>{ if(!isCloud()){ flash('Connecte-toi à un compte cloud pour rejoindre une classe'); return; } closeDrawer(); openPanel('search'); classSearch(); if($('searchInput'))$('searchInput').focus(); };
 if($('searchInput')) $('searchInput').oninput=()=>{ clearTimeout(window._srT); window._srT=setTimeout(()=>classSearch(),350); };
 if($('fSubject')) $('fSubject').oninput=()=>{ clearTimeout(window._srT2); window._srT2=setTimeout(()=>classSearch(),350); };
@@ -1379,8 +1383,8 @@ document.querySelectorAll('.fts').forEach(b=> b.onclick=()=>{ document.querySele
 if($('mpClose')) $('mpClose').onclick=()=>$('mpBox').classList.remove('open');
 if($('crPrivate')) $('crPrivate').onchange=()=>{ $('crPassWrap').style.display=$('crPrivate').checked?'block':'none'; };
 document.querySelectorAll('.crt').forEach(b=> b.onclick=()=>{ document.querySelectorAll('.crt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); });
-if($('crCreate')) $('crCreate').onclick=()=>{ const n=$('crName').value; const pub=!$('crPrivate').checked; const pw=$('crPass').value; const tb=document.querySelector('.crt.on'); const t=tb?tb.dataset.t:'25/5'; const subj=$('crSubject')?$('crSubject').value.trim():''; const lvl=$('crLevel')?$('crLevel').value:''; $('mpCreate').classList.remove('open'); classCreate(n,pub,pw,t,subj,lvl); };
-if($('crCancel')) $('crCancel').onclick=()=>$('mpCreate').classList.remove('open');
+if($('crCreate')) $('crCreate').onclick=()=>{ const n=$('crName').value; const pub=!$('crPrivate').checked; const pw=$('crPass').value; const tb=document.querySelector('.crt.on'); const t=tb?tb.dataset.t:'25/5'; const subj=$('crSubject')?$('crSubject').value.trim():''; const lvl=$('crLevel')?$('crLevel').value:''; closePanelEl($('panel-create')); classCreate(n,pub,pw,t,subj,lvl); };
+if($('crCancel')) $('crCancel').onclick=()=>closePanelEl($('panel-create'));
 if($('clsExit')) $('clsExit').onclick=()=>classExit();
 if($('clsQuit')) $('clsQuit').onclick=()=>classQuit();
 if($('clsDelete')) $('clsDelete').onclick=()=>classDelete();
@@ -1478,43 +1482,39 @@ if($('navFriendClasses')) $('navFriendClasses').onclick=()=>{ closeDrawer(); ope
 if($('frSearchIn')) $('frSearchIn').oninput=()=>{ clearTimeout(window._frT); window._frT=setTimeout(friendSearch,350); };
 if($('frRefresh')) $('frRefresh').onclick=()=>{ loadRequests(); loadSent(); loadFriends(); };
 /* ===================== RÉGLAGES CLASSE + MES CLASSES ===================== */
-let _csPass=null, _csCover=null;
+let _csPass=null;
 function csTimerSel(){ let t='25/5'; document.querySelectorAll('#panel-classset .cst').forEach(b=>{ if(b.classList.contains('on'))t=b.dataset.t; }); return t; }
-function renderCsCover(){ const p=$('csCoverPrev'); if(p){ p.style.backgroundImage=_csCover?('url('+_csCover+')'):''; p.classList.toggle('empty',!_csCover); p.textContent=_csCover?'':'Aucune image'; } if($('csCoverDel'))$('csCoverDel').style.display=_csCover?'block':'none'; }
 async function openClassSettings(){ if(!classCreator){ flash('Seul le créateur peut modifier'); return; }
   openPanel('classset');
   let row={}; try{ const r=await sbAuth('/rest/v1/classes?code=eq.'+encodeURIComponent(classCode)+'&select=name,is_public,subject,level,timer,cover,pass'); const a=await r.json().catch(()=>[]); row=(a&&a[0])||{}; }catch(e){}
-  _csPass=row.pass||null; _csCover=row.cover||null;
+  _csPass=row.pass||null;
   if($('csName'))$('csName').value=row.name||className||'';
   const priv=row.is_public===false; if($('csPrivate'))$('csPrivate').checked=priv; if($('csPassWrap'))$('csPassWrap').style.display=priv?'block':'none';
   if($('csPass'))$('csPass').value=''; if($('csSubject'))$('csSubject').value=row.subject||''; if($('csLevel'))$('csLevel').value=row.level||'';
-  const t=row.timer||classTimer||'25/5'; document.querySelectorAll('#panel-classset .cst').forEach(b=>b.classList.toggle('on', b.dataset.t===t));
-  renderCsCover(); }
+  const t=row.timer||classTimer||'25/5'; document.querySelectorAll('#panel-classset .cst').forEach(b=>b.classList.toggle('on', b.dataset.t===t)); }
 async function saveClassSettings(){ if(!classCreator){ flash('Seul le créateur peut modifier'); return; }
   const name=($('csName')?$('csName').value:'').trim(); if(name.length<2){ flash('Nom trop court'); return; }
   const priv=$('csPrivate')?$('csPrivate').checked:false; const newPw=($('csPass')?$('csPass').value:'').trim();
   let passVal; if(!priv){ passVal=null; } else if(newPw){ passVal=hashStr(newPw); } else if(_csPass){ passVal=_csPass; } else { flash('Mets un mot de passe pour la classe privée'); return; }
   const subject=(($('csSubject')?$('csSubject').value:'').trim())||null; const level=(($('csLevel')?$('csLevel').value:''))||null;
-  const body={name:name,is_public:!priv,pass:passVal,subject:subject,level:level,cover:(_csCover||null)};
+  const body={name:name,is_public:!priv,pass:passVal,subject:subject,level:level};
   flash('Enregistrement…');
   try{ const r=await sbAuth('/rest/v1/classes?code=eq.'+encodeURIComponent(classCode),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(body)}); if(!r.ok){ const tx=await r.text().catch(()=>''); flash(tx.indexOf('cover')>=0||tx.indexOf('column')>=0?'Colonne « cover » à ajouter (voir SQL)':'Échec de l’enregistrement'); return; } }catch(e){ flash('Échec (réseau)'); return; }
   className=name; classIsPublic=!priv; if($('clsName'))$('clsName').textContent=name;
   const t=csTimerSel(); if(t!==classTimer){ await setClassTimer(t); } else { addMyClass({code:classCode,name:name,isPublic:!priv,creator:true,timer:classTimer}); }
   if(typeof profileSetClass==='function') profileSetClass(classCode,name);
-  classBgData=_csCover||null; if(classBgOn&&classBgData)applyImg(classBgData); else if(classBgOn&&!classBgData){ classBgOn=false; if(typeof applyActiveBg==='function')applyActiveBg(); } if(typeof updateClassBgBtns==='function')updateClassBgBtns(); if(classCh){ try{ classCh.send({type:'broadcast',event:'classbg',payload:{}}); }catch(e){} }
   flash('Réglages enregistrés ✓'); if(activePanel==='classset') closePanelEl($('panel-classset')); }
-function csCoverPick(file){ if(!file)return; const fr=new FileReader(); fr.onload=()=>{ const img=new Image(); img.onload=()=>{ try{ const max=960; let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height; if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);} const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h); _csCover=cv.toDataURL('image/jpeg',.72); }catch(e){ _csCover=fr.result; } renderCsCover(); }; img.onerror=()=>{ _csCover=fr.result; renderCsCover(); }; img.src=fr.result; }; fr.readAsDataURL(file); }
 
 function levelShort(l){ const m={college:'Collège',lycee:'Lycée',licence:'Licence',master:'Master',doctorat:'Doctorat'}; return m[l]||l; }
 function classCardGrad(code){ let h=0; for(let i=0;i<(code||'').length;i++) h=(h*31+code.charCodeAt(i))%360; return 'linear-gradient(145deg,hsl('+h+',55%,42%),hsl('+((h+40)%360)+',50%,30%))'; }
 async function openMyClasses(){ openPanel('myclasses'); const box=$('mycGrid'); if(!box)return; if(!isCloud()){ box.innerHTML='<div class="sr-empty">Connecte-toi à un compte cloud pour voir tes classes.</div>'; return; } const codes=myClasses().map(c=>c.code);
   if(!codes.length){ box.innerHTML='<div class="sr-empty">Tu n’as aucune classe. Crée-en une ou rejoins-en une.</div>'; return; }
   box.innerHTML='<div class="sr-empty">Chargement…</div>';
-  let rows=[]; try{ const r=await sbAuth('/rest/v1/classes?code=in.('+codes.map(encodeURIComponent).join(',')+')&select=code,name,is_public,subject,level,timer,cover,creator'); if(r.ok)rows=await r.json().catch(()=>[]); }catch(e){}
+  let rows=[]; try{ const r=await sbAuth('/rest/v1/classes?code=in.('+codes.map(encodeURIComponent).join(',')+')&select=code,name,is_public,subject,level,timer,thumb,creator'); if(r.ok)rows=await r.json().catch(()=>[]); }catch(e){}
   const byCode={}; rows.forEach(r=>byCode[r.code]=r); box.innerHTML='';
   myClasses().forEach(local=>{ const c=byCode[local.code]; const card=document.createElement('div'); card.className='myc-card';
     if(!c){ card.classList.add('gone'); card.innerHTML='<div class="myc-body"><div class="myc-nm">'+(local.name||local.code)+'</div><div class="myc-params">Classe supprimée</div></div>'; const rm=document.createElement('button'); rm.className='myc-rm'; rm.type='button'; rm.textContent='Retirer'; rm.onclick=(e)=>{ e.stopPropagation(); removeMyClass(local.code); openMyClasses(); }; card.appendChild(rm); box.appendChild(card); return; }
-    card.style.backgroundImage = c.cover ? ('linear-gradient(to top,rgba(20,14,32,.92),rgba(20,14,32,.15) 55%,rgba(20,14,32,.05)),url('+c.cover+')') : ('linear-gradient(to top,rgba(20,14,32,.92),rgba(20,14,32,.25) 55%),'+classCardGrad(c.code));
+    card.style.backgroundImage = c.thumb ? ('linear-gradient(to top,rgba(20,14,32,.92),rgba(20,14,32,.15) 55%,rgba(20,14,32,.05)),url('+c.thumb+')') : ('linear-gradient(to top,rgba(20,14,32,.92),rgba(20,14,32,.25) 55%),'+classCardGrad(c.code));
     const mine=c.creator===myUid(); const params=[]; if(c.subject)params.push(c.subject); if(c.level)params.push(levelShort(c.level)); params.push(c.is_public?'🌐 Publique':'🔒 Privée'); params.push(timerLabel(c.timer));
     card.innerHTML='<div class="myc-top">'+(mine?'<span class="myc-badge">★ Créée</span>':'<span></span>')+'<span class="myc-badge code">'+c.code+'</span></div><div class="myc-body"><div class="myc-nm">'+(c.name||c.code)+'</div><div class="myc-params">'+params.join(' · ')+'</div></div>';
     card.onclick=()=>{ if(mine){ openPanel('class'); classEnter(c.code,c.name,c.is_public,true,c.timer); } else { joinClassByCode(c.code,c.name); } };
@@ -1523,8 +1523,6 @@ async function openMyClasses(){ openPanel('myclasses'); const box=$('mycGrid'); 
 if($('clsSettings')) $('clsSettings').onclick=()=>openClassSettings();
 if($('csPrivate')) $('csPrivate').onchange=()=>{ if($('csPassWrap'))$('csPassWrap').style.display=$('csPrivate').checked?'block':'none'; };
 document.querySelectorAll('#panel-classset .cst').forEach(b=> b.onclick=()=>{ document.querySelectorAll('#panel-classset .cst').forEach(x=>x.classList.toggle('on', x===b)); });
-if($('csCoverFile')) $('csCoverFile').onchange=(e)=>csCoverPick(e.target.files&&e.target.files[0]);
-if($('csCoverDel')) $('csCoverDel').onclick=()=>{ _csCover=null; renderCsCover(); };
 if($('csSave')) $('csSave').onclick=()=>saveClassSettings();
 if($('csCancel')) $('csCancel').onclick=()=>{ if(activePanel==='classset') closePanelEl($('panel-classset')); };
 if($('navMyClasses')) $('navMyClasses').onclick=()=>{ closeDrawer(); openMyClasses(); };
@@ -1561,10 +1559,14 @@ async function wpPut(id,data){ if(idbOK){ try{ await IDB.set(id,data); wpData[id
 async function loadWallpaperData(){ wpData={}; for(const w of (S.wallpapers||[])){ if(w.type==='img' && !w.inline && idbOK){ try{ const d=await IDB.get(w.id); if(d) wpData[w.id]=d; }catch(e){ idbOK=false; } } } }
 function wpSrc(w){ return w.type==='url' ? w.src : (wpData[w.id]||w.inline||''); }
 async function applyActiveBg(){ const id=S.bgActive; if(!id){ applyImg(''); return; } const w=(S.wallpapers||[]).find(x=>x.id===id); applyImg(w?wpSrc(w):''); }
-function selectWallpaper(id){ S.bgActive=id; save(); applyActiveBg(); renderWallpapers(); }
+function selectWallpaper(id){ S.bgActive=id; save(); applyActiveBg(); renderWallpapers(); if(typeof syncClassBgFromMine==='function')syncClassBgFromMine(); }
+function currentBgImage(){ try{ const w=(S.wallpapers||[]).find(x=>x.id===S.bgActive); const s=w?wpSrc(w):''; return s||null; }catch(e){ return null; } }
+function imgResize(src,max,q){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{ try{ let w=im.naturalWidth||im.width,h=im.naturalHeight||im.height; if(!w||!h)return res(src); if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);} const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(im,0,0,w,h); res(cv.toDataURL('image/jpeg',q)); }catch(e){ res(src); } }; im.onerror=()=>res(src); im.src=src; }); }
+async function bgCoverThumb(){ const src=currentBgImage(); if(!src) return {cover:null,thumb:null}; if(src.slice(0,5)!=='data:') return {cover:src,thumb:src}; const cover=await imgResize(src,1100,.8); const thumb=await imgResize(src,240,.7); return {cover:cover,thumb:thumb}; }
+async function syncClassBgFromMine(){ if(!(typeof inClass!=='undefined'&&inClass&&classCreator&&classCode))return; const ct=await bgCoverThumb(); classBgData=ct.cover; try{ await sbAuth('/rest/v1/classes?code=eq.'+encodeURIComponent(classCode),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({cover:ct.cover,thumb:ct.thumb})}); }catch(e){} if(classCh){ try{ classCh.send({type:'broadcast',event:'classbg',payload:{}}); }catch(e){} } if(typeof updateClassBgBtns==='function')updateClassBgBtns(); }
 async function addImgWallpaper(dataURL){ const id='w'+Date.now(); const extra=await wpPut(id,dataURL); const item=Object.assign({type:'img',id},extra);
-  S.wallpapers=S.wallpapers||[]; S.wallpapers.push(item); S.bgActive=id; save(); await applyActiveBg(); renderWallpapers(); flash('Fond ajouté 🖼️'); }
-function addUrlWallpaper(url){ const id='w'+Date.now(); S.wallpapers=S.wallpapers||[]; S.wallpapers.push({type:'url',id,src:url}); S.bgActive=id; save(); applyActiveBg(); renderWallpapers(); flash('Fond ajouté 🌄'); }
+  S.wallpapers=S.wallpapers||[]; S.wallpapers.push(item); S.bgActive=id; save(); await applyActiveBg(); renderWallpapers(); if(typeof syncClassBgFromMine==='function')syncClassBgFromMine(); flash('Fond ajouté 🖼️'); }
+function addUrlWallpaper(url){ const id='w'+Date.now(); S.wallpapers=S.wallpapers||[]; S.wallpapers.push({type:'url',id,src:url}); S.bgActive=id; save(); applyActiveBg(); renderWallpapers(); if(typeof syncClassBgFromMine==='function')syncClassBgFromMine(); flash('Fond ajouté 🌄'); }
 async function deleteWallpaper(id){ S.wallpapers=(S.wallpapers||[]).filter(w=>w.id!==id); if(S.bgActive===id)S.bgActive=''; delete wpData[id]; if(idbOK){try{await IDB.del(id);}catch(e){}} save(); await applyActiveBg(); renderWallpapers(); }
 async function migrateBg(){ if(Array.isArray(S.wallpapers)){ if(typeof S.bgActive==='undefined')S.bgActive=''; return; }
   S.wallpapers=[]; S.bgActive='';
@@ -1698,7 +1700,7 @@ if($('navReport')) $('navReport').onclick=()=>{ closeDrawer(); openPanel('report
 if($('navSettings')) $('navSettings').onclick=()=>{ closeDrawer(); openPanel('settings'); };
 if($('navExport')) $('navExport').onclick=()=>{ closeDrawer(); $('exportData').click(); };
 if($('navImport')) $('navImport').onclick=()=>{ closeDrawer(); $('importFile').click(); };
-if($('navAbout')) $('navAbout').onclick=()=> $('aboutBox').classList.toggle('open');
+if($('navAbout')) $('navAbout').onclick=()=>{ closeDrawer(); openPanel('about'); };
 
 /* micro (aperçu local, prêt pour la voix en classe) */
 let micStream=null, micAnalyser=null, micRAF=null, micSrcNode=null;
