@@ -1397,8 +1397,7 @@ function addRemoteTile(pid,stream){ const stage=$('remoteStage'); if(!stage)retu
   updateTileLabel(pid, nameOf(pid)); stage.classList.add('show'); }
 function removeRemoteTile(pid){ const t=document.getElementById('rv-'+pid); if(t) t.remove(); const stage=$('remoteStage'); if(stage&&!stage.children.length) stage.classList.remove('show'); }
 function updateTileLabel(pid,name){ const t=document.getElementById('rv-'+pid); if(t){ const s=t.querySelector('small'); if(s) s.textContent=name||'Invité'; } }
-document.addEventListener('click', e=>{ if(!e.target.closest)return; const b=e.target.closest('.rv-fs,#camFs,#screenFs'); if(b){ e.preventDefault(); e.stopPropagation(); const box=b.closest('.pip,.rv'); if(box) toggleMax(box); } });
-document.addEventListener('dblclick', e=>{ if(!e.target.closest)return; const v=e.target.closest('.pip video,.rv video'); if(v){ const box=v.closest('.pip,.rv'); if(box) toggleMax(box); } });
+document.addEventListener('click', e=>{ if(!e.target||!e.target.closest)return; const btn=e.target.closest('.rv-fs,#camFs,#screenFs'); if(btn){ e.preventDefault(); e.stopPropagation(); const box=btn.closest('.pip,.rv'); if(box) toggleMax(box); return; } const vid=e.target.closest('.pip video,.rv video'); if(vid){ const box=vid.closest('.pip,.rv'); if(box) toggleMax(box); } });
 
 /* ---- menu / boutons ---- */
 if($('navCreate')) $('navCreate').onclick=()=>{ if(!isCloud()){ flash('Connecte-toi à un compte cloud pour créer une classe'); return; } closeDrawer(); openPanel('create'); };
