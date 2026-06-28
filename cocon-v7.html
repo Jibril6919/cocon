@@ -409,6 +409,9 @@
   .rv{position:relative;flex:none;width:158px;border-radius:13px;overflow:hidden;background:#000;border:1px solid var(--line);box-shadow:0 12px 34px -10px rgba(0,0,0,.65);}
   .rv video{width:100%;display:block;background:#000;}
   .rv small{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.62);color:#fff;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;max-width:85%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rv-fs{position:absolute;top:6px;right:6px;width:30px;height:30px;border:none;background:rgba(20,14,32,.62);color:#fff;border-radius:8px;font-size:15px;line-height:1;cursor:pointer;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:2;display:grid;place-items:center;}
+.rv-fs:active{transform:scale(.92);}
+#screenFs{background:none;border:none;color:#fff;font-size:14px;cursor:pointer;padding:0 4px;line-height:1;}
 
   .scrim{position:fixed;inset:0;z-index:45;background:rgba(5,3,12,.5);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:.25s;}
   .scrim.show{opacity:1;pointer-events:auto;}
@@ -577,6 +580,9 @@
     <div class="cfg"><small>Pause</small><input type="number" id="dS" min="1" max="60" value="5"/></div>
     <div class="cfg"><small>Longue</small><input type="number" id="dL" min="1" max="60" value="15"/></div>
   </div>
+  <div class="toggle-row"><span>Enchaîner les sessions</span><div class="sw" id="swAuto"></div></div>
+  <div class="toggle-row"><span>Son de fin de session</span><div class="sw on" id="swChime"></div></div>
+  <div class="toggle-row"><span>Pause longue toutes les <b id="leVal">4</b> sessions</span><input type="range" id="longEvery" min="2" max="8" value="4" style="width:90px"/></div>
 </div>
 
 <div class="panel" id="panel-tasks">
@@ -627,9 +633,6 @@
     <div class="acct-btns"><button class="bsm" id="switchProfile">Changer de profil</button></div>
   </div>
   <p class="ptxt">Réglages de la salle.</p>
-  <div class="toggle-row"><span>Enchaîner les sessions</span><div class="sw" id="swAuto"></div></div>
-  <div class="toggle-row"><span>Son de fin de session</span><div class="sw on" id="swChime"></div></div>
-  <div class="toggle-row"><span>Pluie longue toutes les <b id="leVal">4</b></span><input type="range" id="longEvery" min="2" max="8" value="4" style="width:90px"/></div>
   <button class="danger" id="clearRoom">Vider la salle</button>
   <p class="hint">Nom, tâches, réglages et fond sont sauvegardés et reviennent à ta prochaine visite. La salle ne disparaît que si tu la vides.</p>
 </div>
@@ -772,7 +775,7 @@
 
 <!-- PiP -->
 <div class="pip cam" id="camPip"><div class="bar"><small>Caméra</small><button id="camClose">×</button></div><video id="camVid" autoplay playsinline muted></video></div>
-<div class="pip" id="screenPip"><div class="bar"><small>Écran</small><button id="screenClose">×</button></div><video id="screenVid" autoplay playsinline muted></video></div>
+<div class="pip" id="screenPip"><div class="bar"><small>Écran</small><button id="screenFs" type="button" aria-label="Plein écran">⛶</button><button id="screenClose">×</button></div><video id="screenVid" autoplay playsinline muted></video></div>
 
 <div class="remote-stage" id="remoteStage"></div>
 <div class="cls-pill" id="clsPill"><span class="cls-dot"></span><span class="cls-txt">Classe</span> · <b id="clsPillN">1</b></div>
@@ -1366,12 +1369,14 @@ function updateShareToMesh(){ if(!inClass) return; const tr=currentShareTrack();
 function stopShareToMesh(){ for(const pid in peers){ const P=peers[pid]; if(P.vSender){ try{P.pc.removeTrack(P.vSender);}catch(e){} P.vSender=null; } } shareKind=null; }
 
 /* ---- tuiles vidéo distantes (avec nom) ---- */
+function videoFullscreen(v){ if(!v)return; try{ if(v.requestFullscreen) v.requestFullscreen(); else if(v.webkitRequestFullscreen) v.webkitRequestFullscreen(); else if(v.webkitEnterFullscreen) v.webkitEnterFullscreen(); else if(v.webkitSetPresentationMode) v.webkitSetPresentationMode('fullscreen'); }catch(e){ try{ if(v.webkitEnterFullscreen) v.webkitEnterFullscreen(); }catch(_){} } }
 function addRemoteTile(pid,stream){ const stage=$('remoteStage'); if(!stage)return; let t=document.getElementById('rv-'+pid);
-  if(!t){ t=document.createElement('div'); t.className='rv'; t.id='rv-'+pid; t.innerHTML='<video autoplay playsinline></video><small></small>'; stage.appendChild(t); }
+  if(!t){ t=document.createElement('div'); t.className='rv'; t.id='rv-'+pid; t.innerHTML='<video autoplay playsinline></video><small></small><button class="rv-fs" type="button" aria-label="Plein écran">⛶</button>'; stage.appendChild(t); const fb=t.querySelector('.rv-fs'); if(fb) fb.onclick=(e)=>{ e.stopPropagation(); videoFullscreen(t.querySelector('video')); }; }
   const v=t.querySelector('video'); v.srcObject=stream; if(v.play) v.play().catch(()=>{});
   updateTileLabel(pid, nameOf(pid)); stage.classList.add('show'); }
 function removeRemoteTile(pid){ const t=document.getElementById('rv-'+pid); if(t) t.remove(); const stage=$('remoteStage'); if(stage&&!stage.children.length) stage.classList.remove('show'); }
 function updateTileLabel(pid,name){ const t=document.getElementById('rv-'+pid); if(t){ const s=t.querySelector('small'); if(s) s.textContent=name||'Invité'; } }
+if($('screenFs')) $('screenFs').onclick=()=>videoFullscreen($('screenVid'));
 
 /* ---- menu / boutons ---- */
 if($('navCreate')) $('navCreate').onclick=()=>{ if(!isCloud()){ flash('Connecte-toi à un compte cloud pour créer une classe'); return; } closeDrawer(); openPanel('create'); };
