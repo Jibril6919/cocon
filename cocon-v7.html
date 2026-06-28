@@ -411,7 +411,8 @@
   .rv small{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.62);color:#fff;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;max-width:85%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rv-fs{position:absolute;top:6px;right:6px;width:30px;height:30px;border:none;background:rgba(20,14,32,.62);color:#fff;border-radius:8px;font-size:15px;line-height:1;cursor:pointer;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:2;display:grid;place-items:center;}
 .rv-fs:active{transform:scale(.92);}
-#screenFs{background:none;border:none;color:#fff;font-size:14px;cursor:pointer;padding:0 4px;line-height:1;}
+.pip .bar .bar-btns{display:flex;align-items:center;gap:6px;}
+.pip .bar button{cursor:pointer;}
 
   .scrim{position:fixed;inset:0;z-index:45;background:rgba(5,3,12,.5);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:.25s;}
   .scrim.show{opacity:1;pointer-events:auto;}
@@ -774,8 +775,8 @@
 </div>
 
 <!-- PiP -->
-<div class="pip cam" id="camPip"><div class="bar"><small>Caméra</small><button id="camClose">×</button></div><video id="camVid" autoplay playsinline muted></video></div>
-<div class="pip" id="screenPip"><div class="bar"><small>Écran</small><button id="screenFs" type="button" aria-label="Plein écran">⛶</button><button id="screenClose">×</button></div><video id="screenVid" autoplay playsinline muted></video></div>
+<div class="pip cam" id="camPip"><div class="bar"><small>Caméra</small><span class="bar-btns"><button id="camFs" type="button" aria-label="Plein écran">⛶</button><button id="camClose">×</button></span></div><video id="camVid" autoplay playsinline muted></video></div>
+<div class="pip" id="screenPip"><div class="bar"><small>Écran</small><span class="bar-btns"><button id="screenFs" type="button" aria-label="Plein écran">⛶</button><button id="screenClose">×</button></span></div><video id="screenVid" autoplay playsinline muted></video></div>
 
 <div class="remote-stage" id="remoteStage"></div>
 <div class="cls-pill" id="clsPill"><span class="cls-dot"></span><span class="cls-txt">Classe</span> · <b id="clsPillN">1</b></div>
@@ -1151,7 +1152,7 @@ function placePip(el,corner){ const w=el.offsetWidth||220,pad=14; const bottomBa
 /* drag pips */
 document.querySelectorAll('.pip .bar').forEach(bar=>{
   let sx,sy,ox,oy,drag=false; const pip=bar.parentElement;
-  const down=e=>{ drag=true; const p=e.touches?e.touches[0]:e; sx=p.clientX;sy=p.clientY; const r=pip.getBoundingClientRect(); ox=r.left;oy=r.top; pip.style.left=ox+'px';pip.style.top=oy+'px';pip.style.right='';pip.style.bottom=''; e.preventDefault(); };
+  const down=e=>{ if(e.target.closest('button'))return; drag=true; const p=e.touches?e.touches[0]:e; sx=p.clientX;sy=p.clientY; const r=pip.getBoundingClientRect(); ox=r.left;oy=r.top; pip.style.left=ox+'px';pip.style.top=oy+'px';pip.style.right='';pip.style.bottom=''; e.preventDefault(); };
   const move=e=>{ if(!drag)return; const p=e.touches?e.touches[0]:e; let nx=ox+(p.clientX-sx),ny=oy+(p.clientY-sy);
     nx=Math.max(4,Math.min(innerWidth-pip.offsetWidth-4,nx)); ny=Math.max(4,Math.min(innerHeight-pip.offsetHeight-4,ny)); pip.style.left=nx+'px';pip.style.top=ny+'px'; };
   const up=()=>drag=false;
@@ -1377,6 +1378,9 @@ function addRemoteTile(pid,stream){ const stage=$('remoteStage'); if(!stage)retu
 function removeRemoteTile(pid){ const t=document.getElementById('rv-'+pid); if(t) t.remove(); const stage=$('remoteStage'); if(stage&&!stage.children.length) stage.classList.remove('show'); }
 function updateTileLabel(pid,name){ const t=document.getElementById('rv-'+pid); if(t){ const s=t.querySelector('small'); if(s) s.textContent=name||'Invité'; } }
 if($('screenFs')) $('screenFs').onclick=()=>videoFullscreen($('screenVid'));
+if($('camFs')) $('camFs').onclick=()=>videoFullscreen($('camVid'));
+if($('camVid')) $('camVid').ondblclick=()=>videoFullscreen($('camVid'));
+if($('screenVid')) $('screenVid').ondblclick=()=>videoFullscreen($('screenVid'));
 
 /* ---- menu / boutons ---- */
 if($('navCreate')) $('navCreate').onclick=()=>{ if(!isCloud()){ flash('Connecte-toi à un compte cloud pour créer une classe'); return; } closeDrawer(); openPanel('create'); };
