@@ -134,8 +134,8 @@
   .pc.play svg{width:24px;height:24px;}
   .pomo-cfg{display:flex;justify-content:space-between;gap:8px;margin-top:8px;}
   .pomo-opts{margin-top:4px;}
-  .pomo-opts .toggle-row{padding:8px 0;}
-  .le-row{padding:9px 0;border-top:1px solid var(--line);}
+  .pomo-opts .toggle-row{padding:7px 0;}
+  .le-row{padding:7px 0;border-top:1px solid var(--line);}
   .le-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
   .le-top span:first-child{font-size:14px;}
   .le-num{font-size:12px;color:var(--muted);}
@@ -611,6 +611,7 @@
   <div class="pomo-opts" id="pomoOpts">
     <div class="toggle-row"><span>Enchaîner les sessions</span><div class="sw" id="swAuto"></div></div>
     <div class="toggle-row"><span>Son de fin de session</span><div class="sw on" id="swChime"></div></div>
+    <div class="toggle-row"><span>Notifications</span><div class="sw" id="swNotif"></div></div>
     <div class="le-row">
       <div class="le-top"><span>Pause longue</span><span class="le-num">toutes les <b id="leVal">4</b> sessions</span></div>
       <input type="range" id="longEvery" min="2" max="8" value="4"/>
@@ -955,7 +956,7 @@ const Store = {
 };
 
 /* ===================== STATE ===================== */
-const DEF={ roomName:'', tom:0, dur:{focus:25,short:5,long:15}, longEvery:4, auto:false, chime:true,
+const DEF={ roomName:'', tom:0, dur:{focus:25,short:5,long:15}, longEvery:4, auto:false, chime:true, notif:false,
   ambVol:50, ytVol:70, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, studyLog:{}, myClasses:[], profLevel:null, profCode:'' };
 let S=JSON.parse(JSON.stringify(DEF));
 let mode='focus', running=false, remaining=1500, total=1500, ticker=null, focusDone=0;
@@ -1014,30 +1015,60 @@ function render(){
   if(pKind==='chrono'){ $('pClock').textContent=fmtLong(elapsed); $('pRing').style.strokeDashoffset=RL*(1-((elapsed%60)/60)); document.title=(running?'▶ ':'')+fmtLong(elapsed)+' · Cocon'; }
   else { $('pClock').textContent=fmt(remaining); $('pRing').style.strokeDashoffset=RL*(1-(total>0?remaining/total:0)); document.title=(running?'▶ ':'')+fmt(remaining)+' · Cocon'; }
 }
-function tick(){
-  if(pKind==='chrono'){ elapsed++; accumStudy(); render(); return; }
-  remaining--; if(pKind==='pomo'&&mode==='focus') accumStudy(); if(remaining<=0){ pComplete(); return; } render();
+function armTick(){
+  clearInterval(ticker); ticker=setInterval(tick,500);
+  clearTimeout(endTimer); endTimer=null;
+  if(running && pKind!=='chrono'){ const ms=Math.max(0,endAt-Date.now()); endTimer=setTimeout(function(){ if(running) tick(); }, ms+150); }
 }
-function pStart(){ if(running)return; running=true; setPlayIcon(true); resumeCtx(); ticker=setInterval(tick,1000); }
-function pPause(){ running=false; setPlayIcon(false); clearInterval(ticker); ticker=null; render(); }
+function accumFocusTime(now){ if(lastTs){ studySecAccum+=(now-lastTs)/1000; } lastTs=now; while(studySecAccum>=60){ studySecAccum-=60; logStudy(1); } }
+function tick(){
+  const now=Date.now();
+  if(pKind==='chrono'){ elapsed=Math.max(0,Math.round((now-chronoStart)/1000)); accumFocusTime(now); render(); return; }
+  remaining=Math.round((endAt-now)/1000);
+  if(mode==='focus') accumFocusTime(now); else lastTs=now;
+  if(remaining<=0){ remaining=0; render(); pComplete(); return; }
+  render();
+}
+function pStart(){ if(running)return; running=true; setPlayIcon(true); resumeCtx(); lastTs=Date.now();
+  if(pKind==='chrono'){ chronoStart=Date.now()-elapsed*1000; }
+  else { if(remaining<=0){ total=S.dur[mode]*60; remaining=total; } endAt=Date.now()+remaining*1000; }
+  armTick();
+}
+function pPause(){ running=false; setPlayIcon(false); clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null;
+  if(pKind==='chrono'){ elapsed=Math.max(0,Math.round((Date.now()-chronoStart)/1000)); }
+  else if(endAt){ remaining=Math.max(0,Math.round((endAt-Date.now())/1000)); }
+  render();
+}
 function pToggle(){ running?pPause():pStart(); }
-function pReset(){ pPause(); if(pKind==='chrono'){ elapsed=0; studySecAccum=0; } else { total=S.dur[mode]*60; remaining=total; } render(); }
+function pReset(){ pPause(); if(pKind==='chrono'){ elapsed=0; studySecAccum=0; chronoStart=Date.now(); } else { total=S.dur[mode]*60; remaining=total; } lastTs=0; render(); }
+function notifyCycle(ended){
+  if(S.chime){ try{ chime(); }catch(e){} }
+  if(navigator.vibrate){ try{ navigator.vibrate([140,70,140]); }catch(e){} }
+  if(S.notif && ('Notification' in window) && Notification.permission==='granted'){
+    const isFocus=(ended==='focus');
+    try{ const n=new Notification(isFocus?'\ud83c\udf45 Session termin\u00e9e':'\u2615 Pause termin\u00e9e', { body:isFocus?'Place \u00e0 la pause, respire \ud83c\udf3f':'On repart pour une session \ud83d\udcaa', tag:'cocon-pomo', renotify:true, silent:!S.chime });
+      n.onclick=function(){ try{window.focus();}catch(e){} n.close(); }; }catch(e){}
+  }
+}
 function pComplete(){
-  clearInterval(ticker); ticker=null; running=false;
-  if(S.chime) chime();
-  if(mode==='focus'){ focusDone++; S.tom++; $('tomCount').textContent=S.tom; save();
+  clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null;
+  const ended=mode;
+  notifyCycle(ended);
+  if(ended==='focus'){ focusDone++; S.tom++; $('tomCount').textContent=S.tom; save();
     const nx=(focusDone%S.longEvery===0)?'long':'short';
-    flash(nx==='long'?'Bravo 🍅 grande pause':'Bien joué 🍅 petite pause'); setMode(nx);
-  } else { flash('Pause finie, on repart 💪'); setMode('focus'); }
-  if(S.auto) setTimeout(pStart,800);
+    flash(nx==='long'?'Bravo \ud83c\udf45 grande pause':'Bien jou\u00e9 \ud83c\udf45 petite pause'); setMode(nx);
+  } else { flash('Pause finie, on repart \ud83d\udcaa'); setMode('focus'); }
+  if(S.auto){ running=true; setPlayIcon(true); lastTs=Date.now(); endAt=Date.now()+remaining*1000; armTick(); }
+  else { running=false; setPlayIcon(false); }
 }
 $('pPlay').onclick=pToggle; $('pReset').onclick=pReset; $('pSkip').onclick=pComplete;
+document.addEventListener('visibilitychange',function(){ if(!document.hidden && running) tick(); });
 document.querySelectorAll('.pomo-modes button').forEach(b=>b.onclick=()=>{ if(running)pPause(); setMode(b.dataset.m); });
 ['dF','dS','dL'].forEach((id,i)=>{ const key=['focus','short','long'][i];
   $(id).onchange=()=>{ let v=parseInt($(id).value)||DEF.dur[key]; v=Math.max(1,Math.min(120,v)); $(id).value=v; S.dur[key]=v; save(); if(!running&&mode===key)pReset(); }; });
 
 /* ----- chrono ----- */
-let pKind='pomo', elapsed=0, studySecAccum=0;
+let pKind='pomo', elapsed=0, studySecAccum=0, endAt=0, endTimer=null, lastTs=0, chronoStart=0;
 function setPKind(k){ pKind=k; pPause(); const isChrono=(k==='chrono');
   $('pkPomo').classList.toggle('on',!isChrono); if($('pkChrono'))$('pkChrono').classList.toggle('on',isChrono);
   $('pomoModes').style.display=isChrono?'none':'';
@@ -1651,6 +1682,7 @@ $('wpEditBtn').onclick=()=>{ wpEdit=!wpEdit; renderWallpapers(); };
 /* ===================== SETTINGS ===================== */
 $('swAuto').onclick=function(){this.classList.toggle('on');S.auto=this.classList.contains('on');save();};
 $('swChime').onclick=function(){this.classList.toggle('on');S.chime=this.classList.contains('on');save();};
+$('swNotif').onclick=async function(){ if(!this.classList.contains('on')){ if(!('Notification' in window)){ flash('Notifications non support\u00e9es ici'); return; } let perm=Notification.permission; if(perm==='default'){ try{ perm=await Notification.requestPermission(); }catch(e){} } if(perm!=='granted'){ flash('Autorise les notifications dans ton navigateur'); return; } this.classList.add('on'); S.notif=true; save(); } else { this.classList.remove('on'); S.notif=false; save(); } };
 $('longEvery').oninput=e=>{$('leVal').textContent=e.target.value;S.longEvery=+e.target.value;save();};
 $('clearRoom').onclick=async ()=>{ if(!confirm('Vider la salle ? Tâches, chat, réglages et fonds seront effacés.'))return;
   if(idbOK){ for(const w of (S.wallpapers||[])){ if(w.type==='img'){ try{await IDB.del(w.id);}catch(e){} } } } wpData={};
@@ -1833,6 +1865,8 @@ async function fillUI(){
   $('dF').value=S.dur.focus;$('dS').value=S.dur.short;$('dL').value=S.dur.long;
   $('longEvery').value=S.longEvery;$('leVal').textContent=S.longEvery;
   $('swAuto').classList.toggle('on',S.auto);$('swChime').classList.toggle('on',S.chime);
+  if(S.notif && !(('Notification' in window) && Notification.permission==='granted')) S.notif=false;
+  $('swNotif').classList.toggle('on',S.notif);
   await loadWallpaperData(); await applyActiveBg(); renderWallpapers();
   if(S.media){ $('mediaInput').value=S.media; const sp=spotParse(S.media); $('nowIco').textContent=sp?'🎵':'▶️'; } else { $('mediaInput').value=''; $('nowIco').textContent='🎧'; }
   renderTasks(); renderChat(); setMode('focus');
