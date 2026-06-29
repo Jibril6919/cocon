@@ -634,17 +634,26 @@
 </div>
 
 <div class="panel" id="panel-sounds">
-  <h3>🎵 Sons d'ambiance</h3>
-  <p class="ptxt">Se mélangent à ta musique. Générés en direct, sans souci de droits.</p>
+  <h3>🎵 Sons & musique</h3>
+  <p class="ptxt">Mixe l'ambiance, une radio lofi et ta musique de fond. Re-clique un son actif pour le couper.</p>
+  <div class="sub-h" style="margin-top:4px">Ambiance</div>
   <div class="amb-grid">
     <button class="amb" data-amb="rain"><span class="e">🌧️</span><span class="n">Pluie</span></button>
     <button class="amb" data-amb="fire"><span class="e">🔥</span><span class="n">Feu</span></button>
     <button class="amb" data-amb="wind"><span class="e">🍃</span><span class="n">Vent</span></button>
   </div>
-  <div class="sliderow">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
-    <input type="range" id="ambVol" min="0" max="100" value="50"/>
+  <div class="sliderow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg><input type="range" id="ambVol" min="0" max="100" value="50"/></div>
+  <div class="sub-h">📻 Radio lofi</div>
+  <div class="amb-grid">
+    <button class="amb" data-radio="fluid"><span class="e">🎧</span><span class="n">Lofi</span></button>
+    <button class="amb" data-radio="groovesalad"><span class="e">🌙</span><span class="n">Chill</span></button>
+    <button class="amb" data-radio="dronezone"><span class="e">🌌</span><span class="n">Ambient</span></button>
   </div>
+  <div class="sliderow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg><input type="range" id="radioVol" min="0" max="100" value="60"/></div>
+  <div class="sub-h">Musique de fond</div>
+  <div class="sliderow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg><input type="range" id="mediaVol" min="0" max="100" value="70"/></div>
+  <p class="ptxt" style="margin-top:8px;font-size:11.5px">Règle le volume de ta vidéo YouTube de fond. (Spotify ne permet pas le réglage du volume.)</p>
+  <audio id="lofiRadio" preload="none"></audio>
 </div>
 
 <div class="panel" id="panel-bg">
@@ -957,7 +966,7 @@ const Store = {
 
 /* ===================== STATE ===================== */
 const DEF={ roomName:'', tom:0, dur:{focus:25,short:5,long:15}, longEvery:4, auto:false, chime:true, notif:false,
-  ambVol:50, ytVol:70, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, studyLog:{}, myClasses:[], profLevel:null, profCode:'' };
+  ambVol:50, ytVol:70, radioVol:60, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, studyLog:{}, myClasses:[], profLevel:null, profCode:'' };
 let S=JSON.parse(JSON.stringify(DEF));
 let mode='focus', running=false, remaining=1500, total=1500, ticker=null, focusDone=0;
 const PHASE={focus:'focus',short:'pause',long:'longue'};
@@ -1155,11 +1164,26 @@ function buildAmb(key){ const c=ctx(),src=c.createBufferSource();src.buffer=nois
   else{const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=500;bp.Q.value=.6;const lfo=c.createOscillator();lfo.frequency.value=.15;const lg=c.createGain();lg.gain.value=300;lfo.connect(lg);lg.connect(bp.frequency);lfo.start();src.connect(bp);chain=bp;}
   chain.connect(g);g.connect(c.destination);src.start();return{g,on:false};
 }
+function setAmbGain(n,target){ const c=ctx(); const t=c.currentTime; const cur=(n.g.gain.value!=null)?n.g.gain.value:0; try{ n.g.gain.cancelScheduledValues(t); n.g.gain.setValueAtTime(cur,t); }catch(e){} n.g.gain.linearRampToValueAtTime(Math.max(0,target),t+0.3); }
 function toggleAmb(key,btn){ resumeCtx(); if(!ambNodes[key])ambNodes[key]=buildAmb(key);
-  const n=ambNodes[key];n.on=!n.on; n.g.gain.setTargetAtTime(n.on?(S.ambVol/100)*.5:0,ctx().currentTime,.3); btn.classList.toggle('on',n.on); }
+  const n=ambNodes[key]; const turnOn=!n.on;
+  Object.keys(ambNodes).forEach(k=>{ if(k!==key && ambNodes[k].on){ ambNodes[k].on=false; setAmbGain(ambNodes[k],0); } });
+  document.querySelectorAll('.amb[data-amb]').forEach(b=>{ if(b!==btn) b.classList.remove('on'); });
+  n.on=turnOn; setAmbGain(n,turnOn?(S.ambVol/100)*.5:0); btn.classList.toggle('on',n.on); }
 function refreshAmb(){ Object.values(ambNodes).forEach(n=>{if(n.on)n.g.gain.setTargetAtTime((S.ambVol/100)*.5,ctx().currentTime,.2);}); }
 function chime(){ const c=ctx();resumeCtx(); [880,1320,1760].forEach((f,i)=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=f;const t=c.currentTime+i*.12;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.2,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+1.1);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+1.2);}); }
 document.querySelectorAll('.amb[data-amb]').forEach(b=>b.onclick=()=>toggleAmb(b.dataset.amb,b));
+const RADIO={ fluid:'https://ice.somafm.com/fluid', groovesalad:'https://ice.somafm.com/groovesalad', dronezone:'https://ice.somafm.com/dronezone' };
+let radioKey=null;
+function stopRadio(){ const a=$('lofiRadio'); if(a){ try{ a.pause(); a.removeAttribute('src'); a.load(); }catch(e){} } radioKey=null; document.querySelectorAll('.amb[data-radio]').forEach(b=>b.classList.remove('on','loading')); }
+function toggleRadio(key,btn){ const a=$('lofiRadio'); if(!a)return;
+  if(radioKey===key){ stopRadio(); return; }
+  document.querySelectorAll('.amb[data-radio]').forEach(b=>b.classList.remove('on','loading'));
+  radioKey=key; a.src=RADIO[key]; a.volume=(S.radioVol!=null?S.radioVol:60)/100; btn.classList.add('on'); btn.classList.add('loading');
+  const pr=a.play(); if(pr&&pr.then){ pr.then(()=>btn.classList.remove('loading')).catch(()=>{ btn.classList.remove('loading'); btn.classList.remove('on'); radioKey=null; flash('Radio indisponible, r\u00e9essaie'); }); } else { btn.classList.remove('loading'); } }
+document.querySelectorAll('.amb[data-radio]').forEach(b=>b.onclick=()=>toggleRadio(b.dataset.radio,b));
+if($('lofiRadio')) $('lofiRadio').onerror=()=>{ if(radioKey){ flash('Radio coup\u00e9e (flux indisponible)'); stopRadio(); } };
+if($('radioVol')){ $('radioVol').oninput=e=>{ S.radioVol=+e.target.value; if($('lofiRadio'))$('lofiRadio').volume=S.radioVol/100; }; $('radioVol').onchange=save; }
 $('ambVol').oninput=e=>{S.ambVol=+e.target.value;refreshAmb();}; $('ambVol').onchange=save;
 
 /* ===================== MEDIA: YouTube (bg video) + Spotify ===================== */
@@ -1188,7 +1212,9 @@ function loadMedia(url){ url=url.trim(); if(!url)return; const sp=spotParse(url)
 }
 $('mediaGo').onclick=()=>loadMedia($('mediaInput').value);
 $('mediaInput').onkeydown=e=>{if(e.key==='Enter')loadMedia($('mediaInput').value);};
-$('ytVol').oninput=e=>{S.ytVol=+e.target.value;if(ytReady&&ytPlayer)ytPlayer.setVolume(S.ytVol);}; $('ytVol').onchange=save;
+function setYtVolume(v){ v=Math.max(0,Math.min(100,Math.round(v))); S.ytVol=v; if(ytReady&&ytPlayer){ try{ytPlayer.setVolume(v);}catch(e){} } if($('ytVol')&&+$('ytVol').value!==v)$('ytVol').value=v; if($('mediaVol')&&+$('mediaVol').value!==v)$('mediaVol').value=v; }
+$('ytVol').oninput=e=>setYtVolume(+e.target.value); $('ytVol').onchange=save;
+if($('mediaVol')){ $('mediaVol').oninput=e=>setYtVolume(+e.target.value); $('mediaVol').onchange=save; }
 
 /* ===================== CAMERA + SCREEN SHARE (aperçu local) ===================== */
 let camStream=null,screenStream=null;
@@ -1861,7 +1887,7 @@ $('pinInput').onkeydown=e=>{if(e.key==='Enter')$('pinGo').click();};
 /* ===================== FILL UI + START ===================== */
 async function fillUI(){
   $('roomName').value=S.roomName||''; $('tomCount').textContent=S.tom;
-  $('ambVol').value=S.ambVol; $('ytVol').value=S.ytVol;
+  $('ambVol').value=S.ambVol; $('ytVol').value=S.ytVol; if($('mediaVol'))$('mediaVol').value=S.ytVol; if($('radioVol'))$('radioVol').value=(S.radioVol!=null?S.radioVol:60);
   $('dF').value=S.dur.focus;$('dS').value=S.dur.short;$('dL').value=S.dur.long;
   $('longEvery').value=S.longEvery;$('leVal').textContent=S.longEvery;
   $('swAuto').classList.toggle('on',S.auto);$('swChime').classList.toggle('on',S.chime);
