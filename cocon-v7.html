@@ -129,6 +129,13 @@
   .pc.play{width:58px;height:58px;background:var(--peach);color:#1a1226;border:none;box-shadow:0 8px 22px -6px var(--glow);}
   .pc.play svg{width:24px;height:24px;}
   .pomo-cfg{display:flex;justify-content:space-between;gap:8px;margin-top:16px;}
+  .pomo-opts{margin-top:6px;}
+  .le-row{padding:13px 0;border-top:1px solid var(--line);}
+  .le-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+  .le-top span:first-child{font-size:14px;}
+  .le-num{font-size:12px;color:var(--muted);}
+  .le-num b{color:var(--accent);font-weight:700;font-size:13.5px;}
+  .le-row input[type=range]{width:100%;}
   .cfg{flex:1;background:rgba(243,233,218,.05);border:1px solid var(--line);border-radius:11px;padding:8px;text-align:center;}
   .cfg small{display:block;font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
   .cfg input{width:100%;background:transparent;border:none;outline:none;color:var(--cream);font-family:'Space Mono',monospace;font-weight:700;font-size:17px;text-align:center;}
@@ -596,9 +603,14 @@
     <div class="cfg"><small>Pause</small><input type="number" id="dS" min="1" max="60" value="5"/></div>
     <div class="cfg"><small>Longue</small><input type="number" id="dL" min="1" max="60" value="15"/></div>
   </div>
-  <div class="toggle-row"><span>Enchaîner les sessions</span><div class="sw" id="swAuto"></div></div>
-  <div class="toggle-row"><span>Son de fin de session</span><div class="sw on" id="swChime"></div></div>
-  <div class="toggle-row"><span>Pause longue toutes les <b id="leVal">4</b> sessions</span><input type="range" id="longEvery" min="2" max="8" value="4" style="width:90px"/></div>
+  <div class="pomo-opts" id="pomoOpts">
+    <div class="toggle-row"><span>Enchaîner les sessions</span><div class="sw" id="swAuto"></div></div>
+    <div class="toggle-row"><span>Son de fin de session</span><div class="sw on" id="swChime"></div></div>
+    <div class="le-row">
+      <div class="le-top"><span>Pause longue</span><span class="le-num">toutes les <b id="leVal">4</b> sessions</span></div>
+      <input type="range" id="longEvery" min="2" max="8" value="4"/>
+    </div>
+  </div>
 </div>
 
 <div class="panel" id="panel-tasks">
@@ -1024,7 +1036,7 @@ let pKind='pomo', elapsed=0, studySecAccum=0;
 function setPKind(k){ pKind=k; pPause(); const isChrono=(k==='chrono');
   $('pkPomo').classList.toggle('on',!isChrono); if($('pkChrono'))$('pkChrono').classList.toggle('on',isChrono);
   $('pomoModes').style.display=isChrono?'none':'';
-  if($('pomoCfg'))$('pomoCfg').style.display=isChrono?'none':'';
+  if($('pomoCfg'))$('pomoCfg').style.display=isChrono?'none':''; if($('pomoOpts'))$('pomoOpts').style.display=isChrono?'none':'';
   if($('pSkip'))$('pSkip').style.display=isChrono?'none':'';
   $('pomoTitle').textContent=isChrono?'⏱️ Chrono':'🍅 Pomodoro';
   if(isChrono){ document.body.dataset.mode='focus'; $('pLabel').textContent='chrono'; elapsed=0; studySecAccum=0; render(); }
