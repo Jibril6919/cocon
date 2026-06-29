@@ -88,6 +88,10 @@
   .mbtn{flex:none;height:36px;padding:0 12px;border:none;border-radius:11px;background:var(--peach);color:#1a1226;font-weight:700;font-size:13px;display:grid;place-items:center;}
   .mbtn.ghost{background:rgba(243,233,218,.08);color:var(--cream);border:1px solid var(--line);}
   .vol-mini{display:flex;align-items:center;gap:6px;padding:0 4px;}
+  .vol-btn{background:rgba(243,233,218,.1);color:var(--cream);width:36px;padding:0;}
+  .vol-btn.on{background:var(--peach);color:#1a1226;}
+  .vol-pop{position:absolute;bottom:calc(100% + 10px);right:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px;box-shadow:0 14px 40px -12px rgba(0,0,0,.6);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);z-index:30;}
+  .vol-pop input[type=range]{width:130px;display:block;}
   input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;background:rgba(243,233,218,.22);outline:none;width:70px;}
   input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--peach);box-shadow:0 0 7px var(--glow);}
   input[type=range]::-moz-range-thumb{width:14px;height:14px;border:none;border-radius:50%;background:var(--peach);}
@@ -573,12 +577,10 @@
 <!-- MEDIA BAR -->
 <div class="mediaBar" id="mediaBar">
   <div class="nowico" id="nowIco">🎧</div>
-  <input id="mediaInput" placeholder="Lien YouTube ou Spotify…"/>
+  <input id="mediaInput" placeholder="Lien vidéo YouTube…"/>
   <button class="mbtn" id="mediaGo">Lancer</button>
-  <div class="vol-mini" id="ytVolWrap" style="display:none">
-    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
-    <input type="range" id="ytVol" min="0" max="100" value="70"/>
-  </div>
+  <button class="mbtn vol-btn" id="ytVolBtn" title="Volume de la vidéo" aria-label="Volume" style="display:none"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 4.5a9 9 0 0 1 0 15"/></svg></button>
+  <div class="vol-pop" id="ytVolPop" style="display:none"><input type="range" id="ytVol" min="0" max="100" value="70"/></div>
 </div>
 
 <!-- SPOTIFY -->
@@ -1173,16 +1175,24 @@ function toggleAmb(key,btn){ resumeCtx(); if(!ambNodes[key])ambNodes[key]=buildA
 function refreshAmb(){ Object.values(ambNodes).forEach(n=>{if(n.on)n.g.gain.setTargetAtTime((S.ambVol/100)*.5,ctx().currentTime,.2);}); }
 function chime(){ const c=ctx();resumeCtx(); [880,1320,1760].forEach((f,i)=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=f;const t=c.currentTime+i*.12;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.2,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+1.1);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+1.2);}); }
 document.querySelectorAll('.amb[data-amb]').forEach(b=>b.onclick=()=>toggleAmb(b.dataset.amb,b));
-const RADIO={ fluid:'https://ice.somafm.com/fluid', groovesalad:'https://ice.somafm.com/groovesalad', dronezone:'https://ice.somafm.com/dronezone' };
+const RADIO={ fluid:['https://ice5.somafm.com/fluid-128-mp3','https://ice2.somafm.com/fluid-128-mp3','https://ice.somafm.com/fluid'], groovesalad:['https://ice5.somafm.com/groovesalad-128-mp3','https://ice2.somafm.com/groovesalad-128-mp3','https://ice.somafm.com/groovesalad'], dronezone:['https://ice5.somafm.com/dronezone-128-mp3','https://ice2.somafm.com/dronezone-128-mp3','https://ice.somafm.com/dronezone'] };
 let radioKey=null;
 function stopRadio(){ const a=$('lofiRadio'); if(a){ try{ a.pause(); a.removeAttribute('src'); a.load(); }catch(e){} } radioKey=null; document.querySelectorAll('.amb[data-radio]').forEach(b=>b.classList.remove('on','loading')); }
 function toggleRadio(key,btn){ const a=$('lofiRadio'); if(!a)return;
   if(radioKey===key){ stopRadio(); return; }
   document.querySelectorAll('.amb[data-radio]').forEach(b=>b.classList.remove('on','loading'));
-  radioKey=key; a.src=RADIO[key]; a.volume=(S.radioVol!=null?S.radioVol:60)/100; btn.classList.add('on'); btn.classList.add('loading');
-  const pr=a.play(); if(pr&&pr.then){ pr.then(()=>btn.classList.remove('loading')).catch(()=>{ btn.classList.remove('loading'); btn.classList.remove('on'); radioKey=null; flash('Radio indisponible, r\u00e9essaie'); }); } else { btn.classList.remove('loading'); } }
+  radioKey=key; a.volume=(S.radioVol!=null?S.radioVol:60)/100; btn.classList.add('on'); btn.classList.add('loading');
+  const urls=RADIO[key]; let i=0;
+  (function tryNext(){
+    if(radioKey!==key) return;
+    if(i>=urls.length){ btn.classList.remove('on','loading'); radioKey=null; flash('Radio indisponible 😕 réessaie plus tard'); return; }
+    a.src=urls[i++]; try{a.load();}catch(e){}
+    const pr=a.play();
+    if(pr&&pr.then){ pr.then(()=>{ if(radioKey===key) btn.classList.remove('loading'); }).catch(()=>tryNext()); }
+    else { btn.classList.remove('loading'); }
+  })(); }
 document.querySelectorAll('.amb[data-radio]').forEach(b=>b.onclick=()=>toggleRadio(b.dataset.radio,b));
-if($('lofiRadio')) $('lofiRadio').onerror=()=>{ if(radioKey){ flash('Radio coup\u00e9e (flux indisponible)'); stopRadio(); } };
+if($('lofiRadio')) $('lofiRadio').onerror=()=>{ if(radioKey && !document.querySelector('.amb[data-radio].loading')){ flash('Radio coup\u00e9e (flux indisponible)'); stopRadio(); } };
 if($('radioVol')){ $('radioVol').oninput=e=>{ S.radioVol=+e.target.value; if($('lofiRadio'))$('lofiRadio').volume=S.radioVol/100; }; $('radioVol').onchange=save; }
 $('ambVol').oninput=e=>{S.ambVol=+e.target.value;refreshAmb();}; $('ambVol').onchange=save;
 
@@ -1198,23 +1208,24 @@ window.onYouTubeIframeAPIReady=function(){ ytPlayer=new YT.Player('ytFrame',{ wi
 function playYt(url){ const id=ytId(url); if(!id){flash('Lien YouTube non reconnu');return;}
   hideSpot(); if(!ytReady){ytPend=url;$('nowIco').textContent='⏳';return;}
   ytPlayer.loadVideoById(id); ytPlayer.setVolume(S.ytVol); ytPlayer.playVideo();
-  document.body.dataset.yt='on'; $('ytVolWrap').style.display='flex'; $('nowIco').textContent='▶️';
+  document.body.dataset.yt='on'; if($('ytVolBtn'))$('ytVolBtn').style.display=''; $('nowIco').textContent='▶️';
   S.media=url; save();
 }
-function showSpot(p){ document.body.dataset.yt='off'; if(ytPlayer&&ytReady)try{ytPlayer.stopVideo();}catch(e){} $('ytVolWrap').style.display='none';
+function showSpot(p){ document.body.dataset.yt='off'; if(ytPlayer&&ytReady)try{ytPlayer.stopVideo();}catch(e){} if($('ytVolBtn'))$('ytVolBtn').style.display='none';
   $('spotFrame').src=`https://open.spotify.com/embed/${p.type}/${p.id}?utm_source=cocon`; $('spotWrap').classList.add('show'); $('nowIco').textContent='🎵'; }
 function hideSpot(){ $('spotWrap').classList.remove('show'); $('spotFrame').src=''; }
 $('spotClose').onclick=()=>{ hideSpot(); $('nowIco').textContent='🎧'; S.media=''; save(); };
-function loadMedia(url){ url=url.trim(); if(!url)return; const sp=spotParse(url);
-  if(sp){ showSpot(sp); S.media=url; save(); }
-  else if(ytId(url)){ playYt(url); }
-  else flash('Colle un lien YouTube ou Spotify valide');
+function loadMedia(url){ url=url.trim(); if(!url)return;
+  if(spotParse(url)){ flash('Seuls les liens YouTube sont acceptés 🎥'); return; }
+  if(ytId(url)){ playYt(url); }
+  else flash('Colle un lien vidéo YouTube valide');
 }
 $('mediaGo').onclick=()=>loadMedia($('mediaInput').value);
 $('mediaInput').onkeydown=e=>{if(e.key==='Enter')loadMedia($('mediaInput').value);};
 function setYtVolume(v){ v=Math.max(0,Math.min(100,Math.round(v))); S.ytVol=v; if(ytReady&&ytPlayer){ try{ytPlayer.setVolume(v);}catch(e){} } if($('ytVol')&&+$('ytVol').value!==v)$('ytVol').value=v; if($('mediaVol')&&+$('mediaVol').value!==v)$('mediaVol').value=v; }
 $('ytVol').oninput=e=>setYtVolume(+e.target.value); $('ytVol').onchange=save;
 if($('mediaVol')){ $('mediaVol').oninput=e=>setYtVolume(+e.target.value); $('mediaVol').onchange=save; }
+if($('ytVolBtn')){ $('ytVolBtn').onclick=function(e){ e.stopPropagation(); const pp=$('ytVolPop'); const sh=(pp.style.display==='none'||!pp.style.display); pp.style.display=sh?'block':'none'; $('ytVolBtn').classList.toggle('on',sh); }; document.addEventListener('click',function(e){ const pp=$('ytVolPop'); if(pp&&pp.style.display==='block'&&!e.target.closest('#ytVolPop')&&!e.target.closest('#ytVolBtn')){ pp.style.display='none'; $('ytVolBtn').classList.remove('on'); } }); }
 
 /* ===================== CAMERA + SCREEN SHARE (aperçu local) ===================== */
 let camStream=null,screenStream=null;
@@ -1713,7 +1724,7 @@ $('longEvery').oninput=e=>{$('leVal').textContent=e.target.value;S.longEvery=+e.
 $('clearRoom').onclick=async ()=>{ if(!confirm('Vider la salle ? Tâches, chat, réglages et fonds seront effacés.'))return;
   if(idbOK){ for(const w of (S.wallpapers||[])){ if(w.type==='img'){ try{await IDB.del(w.id);}catch(e){} } } } wpData={};
   S=JSON.parse(JSON.stringify(DEF)); save(); applyActiveBg(); renderWallpapers(); hideSpot(); document.body.dataset.yt='off'; if(ytPlayer&&ytReady)try{ytPlayer.stopVideo();}catch(e){}
-  $('roomName').value=''; $('tomCount').textContent='0'; focusDone=0; $('nowIco').textContent='🎧'; $('mediaInput').value='';
+  $('roomName').value=''; $('tomCount').textContent='0'; focusDone=0; $('nowIco').textContent='🎧'; $('mediaInput').value=''; if($('ytVolBtn'))$('ytVolBtn').style.display='none'; if($('ytVolPop'))$('ytVolPop').style.display='none'; if(typeof ytPlayer!=='undefined'&&ytPlayer&&ytReady)try{ytPlayer.stopVideo();}catch(e){} document.body.dataset.yt='off';
   $('dF').value=25;$('dS').value=5;$('dL').value=15; $('bgUrl').value='';
   $('swAuto').classList.remove('on');$('swChime').classList.add('on');$('longEvery').value=4;$('leVal').textContent='4';
   document.querySelectorAll('.amb.on').forEach(b=>b.classList.remove('on'));
@@ -1894,7 +1905,7 @@ async function fillUI(){
   if(S.notif && !(('Notification' in window) && Notification.permission==='granted')) S.notif=false;
   $('swNotif').classList.toggle('on',S.notif);
   await loadWallpaperData(); await applyActiveBg(); renderWallpapers();
-  if(S.media){ $('mediaInput').value=S.media; const sp=spotParse(S.media); $('nowIco').textContent=sp?'🎵':'▶️'; } else { $('mediaInput').value=''; $('nowIco').textContent='🎧'; }
+  if(S.media && ytId(S.media)){ $('mediaInput').value=S.media; $('nowIco').textContent='▶️'; } else { S.media=''; $('mediaInput').value=''; $('nowIco').textContent='🎧'; }
   renderTasks(); renderChat(); setMode('focus');
 }
 async function startApp(id){
