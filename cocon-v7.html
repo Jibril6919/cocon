@@ -150,6 +150,9 @@
   .le-num{font-size:12px;color:var(--muted);}
   .le-num b{color:var(--accent);font-weight:700;font-size:13.5px;}
   .le-row input[type=range]{width:100%;}
+  #pomoFollowNote{display:none;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.5;margin-top:14px;padding:11px;background:rgba(243,233,218,.05);border:1px solid var(--line);border-radius:12px;}
+  body[data-follow="1"] #pomoFollowNote{display:block;}
+  body[data-follow="1"] .pk-tabs,body[data-follow="1"] .pomo-modes,body[data-follow="1"] .pomo-ctl,body[data-follow="1"] .pomo-cfg,body[data-follow="1"] .pomo-opts{display:none!important;}
   .cfg{flex:1;background:rgba(243,233,218,.05);border:1px solid var(--line);border-radius:11px;padding:6px;text-align:center;}
   .cfg small{display:block;font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
   .cfg input{width:100%;background:transparent;border:none;outline:none;color:var(--cream);font-family:'Space Mono',monospace;font-weight:700;font-size:17px;text-align:center;}
@@ -616,6 +619,7 @@
     <div class="cfg"><small>Pause</small><input type="number" id="dS" min="1" max="60" value="5"/></div>
     <div class="cfg"><small>Longue</small><input type="number" id="dL" min="1" max="60" value="15"/></div>
   </div>
+  <div id="pomoFollowNote">⏱️ Minuteur synchronisé · piloté par l’hôte de la classe</div>
   <div class="pomo-opts" id="pomoOpts">
     <div class="toggle-row"><span>Enchaîner les sessions</span><div class="sw" id="swAuto"></div></div>
     <div class="toggle-row"><span>Son de fin de session</span><div class="sw on" id="swChime"></div></div>
@@ -1022,6 +1026,14 @@ function setMode(m,reset=true){
 }
 function fmtLong(s){ const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), x=s%60; return (h>0?h+':'+String(m).padStart(2,'0'):String(m).padStart(2,'0'))+':'+String(x).padStart(2,'0'); }
 function setPlayIcon(on){ $('pPlayI').innerHTML=on?'<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>':'<path d="M8 5v14l11-7z"/>'; }
+function heartbeatPomo(now){ if(typeof classCreator!=='undefined' && classCreator && typeof inClass!=='undefined' && inClass && (now-lastBcast)>12000) broadcastPomo(); }
+function broadcastPomo(){ if(!(typeof classCreator!=='undefined' && classCreator && typeof inClass!=='undefined' && inClass && classCh)) return; lastBcast=Date.now(); var p; if(pKind==='chrono'){ p={pKind:'chrono',running:running,elapsed:elapsed}; } else { p={pKind:'pomo',running:running,mode:mode,total:total,remaining:remaining}; } try{ classCh.send({type:'broadcast',event:'pomo',payload:p}); }catch(e){} }
+function onPomoSync(p){ if(!p || (typeof classCreator!=='undefined' && classCreator)) return;
+  if(p.pKind==='chrono'){ pKind='chrono'; if($('pLabel'))$('pLabel').textContent='CHRONO'; if(p.running){ running=true; chronoStart=Date.now()-(p.elapsed||0)*1000; lastTs=Date.now(); setPlayIcon(true); armTick(); } else { running=false; elapsed=p.elapsed||0; setPlayIcon(false); clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null; render(); } return; }
+  pKind='pomo'; setMode(p.mode||'focus',false); total=p.total||(S.dur[mode]*60);
+  if(p.running){ running=true; endAt=Date.now()+(p.remaining||0)*1000; lastTs=Date.now(); setPlayIcon(true); armTick(); }
+  else { running=false; remaining=(p.remaining!=null?p.remaining:total); setPlayIcon(false); clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null; }
+  render(); }
 function todayKey(d){ d=d||new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function logStudy(min){ if(!S.studyLog)S.studyLog={}; const k=todayKey(); S.studyLog[k]=(S.studyLog[k]||0)+min; save(); }
 function accumStudy(){ studySecAccum++; if(studySecAccum>=60){ studySecAccum-=60; logStudy(1); } }
@@ -1037,24 +1049,25 @@ function armTick(){
 function accumFocusTime(now){ if(lastTs){ studySecAccum+=(now-lastTs)/1000; } lastTs=now; while(studySecAccum>=60){ studySecAccum-=60; logStudy(1); } }
 function tick(){
   const now=Date.now();
+  if(running) heartbeatPomo(now);
   if(pKind==='chrono'){ elapsed=Math.max(0,Math.round((now-chronoStart)/1000)); accumFocusTime(now); render(); return; }
   remaining=Math.round((endAt-now)/1000);
   if(mode==='focus') accumFocusTime(now); else lastTs=now;
-  if(remaining<=0){ remaining=0; render(); pComplete(); return; }
+  if(remaining<=0){ remaining=0; render(); if(classFollower){ clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null; } else { pComplete(); } return; }
   render();
 }
 function pStart(){ if(running)return; running=true; setPlayIcon(true); resumeCtx(); lastTs=Date.now();
   if(pKind==='chrono'){ chronoStart=Date.now()-elapsed*1000; }
   else { if(remaining<=0){ total=S.dur[mode]*60; remaining=total; } endAt=Date.now()+remaining*1000; }
-  armTick();
+  armTick(); broadcastPomo();
 }
 function pPause(){ running=false; setPlayIcon(false); clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null;
   if(pKind==='chrono'){ elapsed=Math.max(0,Math.round((Date.now()-chronoStart)/1000)); }
   else if(endAt){ remaining=Math.max(0,Math.round((endAt-Date.now())/1000)); }
-  render();
+  render(); broadcastPomo();
 }
 function pToggle(){ running?pPause():pStart(); }
-function pReset(){ pPause(); if(pKind==='chrono'){ elapsed=0; studySecAccum=0; chronoStart=Date.now(); } else { total=S.dur[mode]*60; remaining=total; } lastTs=0; render(); }
+function pReset(){ pPause(); if(pKind==='chrono'){ elapsed=0; studySecAccum=0; chronoStart=Date.now(); } else { total=S.dur[mode]*60; remaining=total; } lastTs=0; render(); broadcastPomo(); }
 function notifyCycle(ended){
   if(S.chime){ try{ chime(); }catch(e){} }
   if(navigator.vibrate){ try{ navigator.vibrate([140,70,140]); }catch(e){} }
@@ -1074,6 +1087,7 @@ function pComplete(){
   } else { flash('Pause finie, on repart \ud83d\udcaa'); setMode('focus'); }
   if(S.auto){ running=true; setPlayIcon(true); lastTs=Date.now(); endAt=Date.now()+remaining*1000; armTick(); }
   else { running=false; setPlayIcon(false); }
+  broadcastPomo();
 }
 $('pPlay').onclick=pToggle; $('pReset').onclick=pReset; $('pSkip').onclick=pComplete;
 document.addEventListener('visibilitychange',function(){ if(!document.hidden && running) tick(); });
@@ -1083,6 +1097,7 @@ document.querySelectorAll('.pomo-modes button').forEach(b=>b.onclick=()=>{ if(ru
 
 /* ----- chrono ----- */
 let pKind='pomo', elapsed=0, studySecAccum=0, endAt=0, endTimer=null, lastTs=0, chronoStart=0;
+  let classFollower=false, lastBcast=0;
 function setPKind(k){ pKind=k; pPause(); const isChrono=(k==='chrono');
   $('pkPomo').classList.toggle('on',!isChrono); if($('pkChrono'))$('pkChrono').classList.toggle('on',isChrono);
   $('pomoModes').style.display=isChrono?'none':'';
@@ -1415,11 +1430,12 @@ async function classEnter(code,name,isPublic,creator,timer){
   if($('clsSettings')) $('clsSettings').style.display=classCreator?'block':'none';
   const ch=rt.channel('class:'+code,{config:{presence:{key:myPid},broadcast:{self:false}}}); classCh=ch;
   ch.on('presence',{event:'sync'},()=>{ presenceList().forEach(p=>{ if(p.pid&&p.pid!==myPid) makePeer(p.pid); }); renderMembers(); });
-  ch.on('presence',{event:'join'},({newPresences})=>{ (newPresences||[]).forEach(p=>{ if(p.pid&&p.pid!==myPid) makePeer(p.pid); }); renderMembers(); });
+  ch.on('presence',{event:'join'},({newPresences})=>{ (newPresences||[]).forEach(p=>{ if(p.pid&&p.pid!==myPid) makePeer(p.pid); }); renderMembers(); if(typeof classCreator!=='undefined' && classCreator) setTimeout(broadcastPomo,500); });
   ch.on('presence',{event:'leave'},({leftPresences})=>{ (leftPresences||[]).forEach(p=>{ if(p.pid){ closePeer(p.pid); removeRemoteTile(p.pid); } }); renderMembers(); });
   ch.on('broadcast',{event:'chat'},({payload})=>onClassChat(payload));
   ch.on('broadcast',{event:'signal'},({payload})=>onSignal(payload));
   ch.on('broadcast',{event:'timer'},({payload})=>onClassTimer(payload));
+  ch.on('broadcast',{event:'pomo'},({payload})=>onPomoSync(payload));
   ch.on('broadcast',{event:'classbg'},()=>{ if(typeof loadClassBg==='function') loadClassBg(); });
   ch.subscribe(async (st)=>{ if(st==='SUBSCRIBED'){ inClass=true; await ch.track(myPresence()); onClassEntered(); } else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){ flash('Connexion classe échouée'); } });
   applyClassTimer(classTimer);
@@ -1437,8 +1453,8 @@ async function classDelete(){ if(!classCreator){ flash('Seul le créateur peut s
 
 function myPresence(){ return {pid:myPid,name:myName(),emoji:myEmoji(),photo:(S.profPhoto||''),mic:!!voiceStream,vid:shareKind,uid:((cloudMode&&cloudUser)?cloudUser.id:''),code:(S.profCode||'')}; }
 function presenceUpdate(){ if(classCh&&inClass){ try{ classCh.track(myPresence()); }catch(e){} } renderMembers(); }
-function onClassEntered(){ S.chat=[]; renderChat(); updateChatNote(); renderMembers(); if($('clsPill'))$('clsPill').classList.add('show'); if(typeof profileSetClass==='function') profileSetClass(classCode,className); if(typeof startClassHeartbeat==='function') startClassHeartbeat(); if(typeof loadClassBg==='function') loadClassBg(); flash('Dans « '+className+' » 👥'); }
-function onClassLeft(){ if(typeof stopClassHeartbeat==='function') stopClassHeartbeat(); if(typeof classBgOn!=='undefined'&&classBgOn){ classBgOn=false; if(typeof applyActiveBg==='function') applyActiveBg(); } classBgData=null; if(typeof updateClassBgBtns==='function') updateClassBgBtns(); if($('clsPill'))$('clsPill').classList.remove('show'); S.chat=[]; renderChat(); updateChatNote(); if(activePanel==='class') closePanelEl($('panel-class')); var st=$('remoteStage'); if(st) st.classList.remove('show'); if(typeof profileSetClass==='function') profileSetClass(null,null); }
+function onClassEntered(){ S.chat=[]; renderChat(); updateChatNote(); renderMembers(); classFollower=(typeof inClass!=='undefined'&&inClass)&&!classCreator; document.body.dataset.follow=classFollower?'1':''; if(typeof applyClassTimer==='function'&&classTimer) applyClassTimer(classTimer); if($('clsPill'))$('clsPill').classList.add('show'); if(typeof profileSetClass==='function') profileSetClass(classCode,className); if(typeof startClassHeartbeat==='function') startClassHeartbeat(); if(typeof loadClassBg==='function') loadClassBg(); flash('Dans « '+className+' » 👥'); }
+function onClassLeft(){ classFollower=false; document.body.dataset.follow=''; if(typeof stopClassHeartbeat==='function') stopClassHeartbeat(); if(typeof classBgOn!=='undefined'&&classBgOn){ classBgOn=false; if(typeof applyActiveBg==='function') applyActiveBg(); } classBgData=null; if(typeof updateClassBgBtns==='function') updateClassBgBtns(); if($('clsPill'))$('clsPill').classList.remove('show'); S.chat=[]; renderChat(); updateChatNote(); if(activePanel==='class') closePanelEl($('panel-class')); var st=$('remoteStage'); if(st) st.classList.remove('show'); if(typeof profileSetClass==='function') profileSetClass(null,null); }
 let _clsHb=null;
 function startClassHeartbeat(){ stopClassHeartbeat(); _clsHb=setInterval(()=>{ if(typeof inClass!=='undefined'&&inClass&&typeof profileSetClass==='function') profileSetClass(classCode,className); }, 300000); }
 function stopClassHeartbeat(){ if(_clsHb){ clearInterval(_clsHb); _clsHb=null; } }
