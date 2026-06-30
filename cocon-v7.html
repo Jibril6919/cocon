@@ -95,6 +95,8 @@
   .vol-btn.on{background:var(--peach);color:#1a1226;}
   .vol-pop{position:absolute;bottom:calc(100% + 10px);right:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px;box-shadow:0 14px 40px -12px rgba(0,0,0,.6);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);z-index:30;}
   .vol-pop input[type=range]{width:130px;display:block;}
+  .clr-btn{background:rgba(243,233,218,.1);color:var(--cream);width:32px;padding:0;font-size:18px;line-height:1;}
+  .clr-btn:hover{background:rgba(255,120,120,.25);color:#fff;}
   input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;background:rgba(243,233,218,.22);outline:none;width:70px;}
   input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--peach);box-shadow:0 0 7px var(--glow);}
   input[type=range]::-moz-range-thumb{width:14px;height:14px;border:none;border-radius:50%;background:var(--peach);}
@@ -581,6 +583,7 @@
 <div class="mediaBar" id="mediaBar">
   <div class="nowico" id="nowIco">🎧</div>
   <input id="mediaInput" placeholder="Lien vidéo YouTube…"/>
+  <button class="mbtn clr-btn" id="mediaClear" title="Effacer le lien" aria-label="Effacer" style="display:none">×</button>
   <button class="mbtn" id="mediaGo">Lancer</button>
   <button class="mbtn vol-btn" id="ytVolBtn" title="Volume de la vidéo" aria-label="Volume" style="display:none"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 4.5a9 9 0 0 1 0 15"/></svg></button>
   <div class="vol-pop" id="ytVolPop" style="display:none"><input type="range" id="ytVol" min="0" max="100" value="70"/></div>
@@ -1208,7 +1211,7 @@ window.onYouTubeIframeAPIReady=function(){ ytPlayer=new YT.Player('ytFrame',{ wi
 function playYt(url){ const id=ytId(url); if(!id){flash('Lien YouTube non reconnu');return;}
   hideSpot(); if(!ytReady){ytPend=url;$('nowIco').textContent='⏳';return;}
   ytPlayer.loadVideoById(id); ytPlayer.setVolume(S.ytVol); ytPlayer.playVideo();
-  document.body.dataset.yt='on'; if($('ytVolBtn'))$('ytVolBtn').style.display=''; $('nowIco').textContent='⏸️'; $('nowIco').classList.add('playable');
+  document.body.dataset.yt='on'; if($('ytVolBtn'))$('ytVolBtn').style.display=''; if($('mediaClear'))$('mediaClear').style.display=''; $('nowIco').textContent='⏸️'; $('nowIco').classList.add('playable');
   S.media=url; save();
 }
 function showSpot(p){ document.body.dataset.yt='off'; if(ytPlayer&&ytReady)try{ytPlayer.stopVideo();}catch(e){} if($('ytVolBtn'))$('ytVolBtn').style.display='none';
@@ -1228,6 +1231,9 @@ if($('mediaVol')){ $('mediaVol').oninput=e=>setYtVolume(+e.target.value); $('med
 if($('ytVolBtn')){ $('ytVolBtn').onclick=function(e){ e.stopPropagation(); const pp=$('ytVolPop'); const sh=(pp.style.display==='none'||!pp.style.display); pp.style.display=sh?'block':'none'; $('ytVolBtn').classList.toggle('on',sh); }; document.addEventListener('click',function(e){ const pp=$('ytVolPop'); if(pp&&pp.style.display==='block'&&!e.target.closest('#ytVolPop')&&!e.target.closest('#ytVolBtn')){ pp.style.display='none'; $('ytVolBtn').classList.remove('on'); } }); }
 function toggleMediaPlay(){ if(!S.media||!ytId(S.media)||!ytReady||!ytPlayer)return; var st=ytPlayer.getPlayerState(); if(st===1){ytPlayer.pauseVideo();} else if(st===2){ytPlayer.playVideo();} else {playYt(S.media);} }
 if($('nowIco')) $('nowIco').onclick=toggleMediaPlay;
+function clearMedia(){ $('mediaInput').value=''; if(typeof ytPlayer!=='undefined'&&ytPlayer&&ytReady){try{ytPlayer.stopVideo();}catch(e){}} document.body.dataset.yt='off'; $('nowIco').textContent='🎧'; $('nowIco').classList.remove('playable'); if($('ytVolBtn'))$('ytVolBtn').style.display='none'; if($('ytVolPop'))$('ytVolPop').style.display='none'; if($('mediaClear'))$('mediaClear').style.display='none'; S.media=''; save(); $('mediaInput').focus(); }
+if($('mediaClear')) $('mediaClear').onclick=clearMedia;
+if($('mediaInput')) $('mediaInput').oninput=function(){ if($('mediaClear'))$('mediaClear').style.display=this.value.trim()?'':'none'; };
 
 /* ===================== CAMERA + SCREEN SHARE (aperçu local) ===================== */
 let camStream=null,screenStream=null;
@@ -1907,7 +1913,7 @@ async function fillUI(){
   if(S.notif && !(('Notification' in window) && Notification.permission==='granted')) S.notif=false;
   $('swNotif').classList.toggle('on',S.notif);
   await loadWallpaperData(); await applyActiveBg(); renderWallpapers();
-  if(S.media && ytId(S.media)){ $('mediaInput').value=S.media; $('nowIco').textContent='▶️'; $('nowIco').classList.add('playable'); } else { S.media=''; $('mediaInput').value=''; $('nowIco').textContent='🎧'; }
+  if(S.media && ytId(S.media)){ $('mediaInput').value=S.media; $('nowIco').textContent='▶️'; $('nowIco').classList.add('playable'); if($('mediaClear'))$('mediaClear').style.display=''; } else { S.media=''; $('mediaInput').value=''; $('nowIco').textContent='🎧'; }
   renderTasks(); renderChat(); setMode('focus');
 }
 async function startApp(id){
