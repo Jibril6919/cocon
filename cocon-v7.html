@@ -153,6 +153,22 @@
   #pomoFollowNote{display:none;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.5;margin-top:14px;padding:11px;background:rgba(243,233,218,.05);border:1px solid var(--line);border-radius:12px;}
   body[data-follow="1"] #pomoFollowNote{display:block;}
   body[data-follow="1"] .pk-tabs,body[data-follow="1"] .pomo-modes,body[data-follow="1"] .pomo-ctl,body[data-follow="1"] .pomo-cfg,body[data-follow="1"] .pomo-opts{display:none!important;}
+  .goal-head{display:flex;align-items:center;gap:16px;padding:4px 2px 15px;border-bottom:1px solid var(--line);margin-bottom:14px;}
+  .goal-ring-wrap{position:relative;width:100px;height:100px;flex:0 0 auto;}
+  .goal-svg{width:100px;height:100px;display:block;}
+  .goal-svg .goal-bg{fill:none;stroke:rgba(243,233,218,.09);stroke-width:9;}
+  .goal-svg .goal-fg{fill:none;stroke:#f0a868;stroke-width:9;stroke-linecap:round;stroke-dasharray:326.7;stroke-dashoffset:326.7;transition:stroke-dashoffset .6s ease,stroke .3s;}
+  .goal-svg .goal-fg.done{stroke:#8fce7a;}
+  .goal-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .goal-today{font-size:21px;font-weight:700;color:var(--cream);line-height:1;}
+  .goal-of{font-size:11.5px;color:var(--muted);margin-top:3px;}
+  .goal-side{flex:1;min-width:0;}
+  .goal-cap{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px;}
+  .goal-edit{background:rgba(243,233,218,.06);border:1px solid var(--line);color:var(--cream);border-radius:20px;padding:7px 13px;font-size:13px;cursor:pointer;font-weight:600;}
+  .goal-edit:active{transform:scale(.95);}
+  .goal-tot{display:flex;align-items:baseline;justify-content:space-between;margin-top:15px;gap:10px;}
+  .goal-tot-lbl{font-size:12.5px;color:var(--muted);}
+  .goal-tot-val{font-size:18px;font-weight:700;color:var(--cream);}
   .cfg{flex:1;background:rgba(243,233,218,.05);border:1px solid var(--line);border-radius:11px;padding:6px;text-align:center;}
   .cfg small{display:block;font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
   .cfg input{width:100%;background:transparent;border:none;outline:none;color:var(--cream);font-family:'Space Mono',monospace;font-weight:700;font-size:17px;text-align:center;}
@@ -782,6 +798,17 @@
 
 <div class="panel" id="panel-report">
   <h3>📊 Rapport</h3>
+  <div class="goal-head">
+    <div class="goal-ring-wrap">
+      <svg viewBox="0 0 120 120" class="goal-svg" aria-hidden="true"><circle cx="60" cy="60" r="52" class="goal-bg"></circle><circle cx="60" cy="60" r="52" class="goal-fg" id="goalRing" transform="rotate(-90 60 60)"></circle></svg>
+      <div class="goal-center"><div class="goal-today" id="goalToday">0m</div><div class="goal-of" id="goalOf">/ 2h</div></div>
+    </div>
+    <div class="goal-side">
+      <div class="goal-cap">Objectif du jour</div>
+      <button class="goal-edit" id="goalEdit" type="button">🎯 <span id="goalGoalLbl">2h</span> / jour</button>
+      <div class="goal-tot"><span class="goal-tot-lbl">Focus total</span><span class="goal-tot-val" id="goalTotal">0h</span></div>
+    </div>
+  </div>
   <div class="rep-tabs"><button id="repWeek" class="rep on" type="button">Semaine</button><button id="repMonth" class="rep" type="button">Mois</button><button id="repReg" class="rep" type="button">Régularité</button></div>
   <div id="repBarsView">
     <div class="rep-total"><div class="rep-big" id="repBig">0 min</div></div>
@@ -975,7 +1002,7 @@ const Store = {
 
 /* ===================== STATE ===================== */
 const DEF={ roomName:'', tom:0, dur:{focus:25,short:5,long:15}, longEvery:4, auto:false, chime:true, notif:false,
-  ambVol:50, ytVol:70, radioVol:60, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, studyLog:{}, myClasses:[], profLevel:null, profCode:'' };
+  ambVol:50, ytVol:70, radioVol:60, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, goalMin:120, studyLog:{}, myClasses:[], profLevel:null, profCode:'' };
 let S=JSON.parse(JSON.stringify(DEF));
 let mode='focus', running=false, remaining=1500, total=1500, ticker=null, focusDone=0;
 const PHASE={focus:'focus',short:'pause',long:'longue'};
@@ -1138,7 +1165,18 @@ function renderReg(){
     h+='</div>'; }
   h+='</div>'; if($('heatBox'))$('heatBox').innerHTML=h;
 }
+function fmtHM(m){ m=Math.round(m); return m>=60?(Math.floor(m/60)+'h'+(m%60?String(m%60).padStart(2,'0'):'')):(m+'m'); }
+function cycleGoal(){ const o=[60,120,180,240]; let i=o.indexOf(S.goalMin||120); S.goalMin=o[(i+1)%o.length]; save(); renderGoal(); flash('Objectif : '+(S.goalMin/60)+'h par jour'); }
+function renderGoal(){ const log=S.studyLog||{}; const today=log[todayKey()]||0; const goal=S.goalMin||120; let total=0; for(const k in log) total+=log[k];
+  const C=326.7, pct=Math.max(0,Math.min(1,goal>0?today/goal:0));
+  if($('goalRing')){ $('goalRing').style.strokeDashoffset=C*(1-pct); $('goalRing').classList.toggle('done',pct>=1); }
+  if($('goalToday'))$('goalToday').textContent=fmtHM(today);
+  if($('goalOf'))$('goalOf').textContent='/ '+(goal/60)+'h';
+  if($('goalGoalLbl'))$('goalGoalLbl').textContent=(goal/60)+'h';
+  if($('goalTotal'))$('goalTotal').textContent=fmtHM(total);
+  if($('goalEdit'))$('goalEdit').onclick=cycleGoal; }
 function renderReport(){
+  renderGoal();
   if(repPeriod==='reg'){ if($('repBarsView'))$('repBarsView').style.display='none'; if($('repRegView'))$('repRegView').style.display=''; renderReg(); return; }
   if($('repBarsView'))$('repBarsView').style.display=''; if($('repRegView'))$('repRegView').style.display='none';
   const log=S.studyLog||{}; const chart=$('repChart'); if(!chart)return; chart.innerHTML='';
