@@ -169,6 +169,13 @@
   .goal-tot{display:flex;align-items:baseline;justify-content:space-between;margin-top:15px;gap:10px;}
   .goal-tot-lbl{font-size:12.5px;color:var(--muted);}
   .goal-tot-val{font-size:18px;font-weight:700;color:var(--cream);}
+  .goal-pop{display:none;margin-top:11px;gap:9px;flex-direction:column;}
+  .goal-pop.open{display:flex;}
+  .gp-unit{display:flex;align-items:center;gap:9px;}
+  .gp-btn{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:rgba(243,233,218,.06);color:var(--cream);font-size:17px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .gp-btn:active{transform:scale(.9);}
+  .gp-num{min-width:56px;font-size:13.5px;color:var(--muted);}
+  .gp-num b{font-size:16px;font-weight:700;color:var(--cream);margin-right:2px;}
   .cfg{flex:1;background:rgba(243,233,218,.05);border:1px solid var(--line);border-radius:11px;padding:6px;text-align:center;}
   .cfg small{display:block;font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
   .cfg input{width:100%;background:transparent;border:none;outline:none;color:var(--cream);font-family:'Space Mono',monospace;font-weight:700;font-size:17px;text-align:center;}
@@ -806,6 +813,10 @@
     <div class="goal-side">
       <div class="goal-cap">Objectif du jour</div>
       <button class="goal-edit" id="goalEdit" type="button">🎯 <span id="goalGoalLbl">2h</span> / jour</button>
+      <div class="goal-pop" id="goalPop">
+        <div class="gp-unit"><button class="gp-btn" id="gpHm" type="button">−</button><span class="gp-num"><b id="gpH">2</b>h</span><button class="gp-btn" id="gpHp" type="button">+</button></div>
+        <div class="gp-unit"><button class="gp-btn" id="gpMm" type="button">−</button><span class="gp-num"><b id="gpM">00</b>min</span><button class="gp-btn" id="gpMp" type="button">+</button></div>
+      </div>
       <div class="goal-tot"><span class="goal-tot-lbl">Focus total</span><span class="goal-tot-val" id="goalTotal">0h</span></div>
     </div>
   </div>
@@ -1166,15 +1177,23 @@ function renderReg(){
   h+='</div>'; if($('heatBox'))$('heatBox').innerHTML=h;
 }
 function fmtHM(m){ m=Math.round(m); return m>=60?(Math.floor(m/60)+'h'+(m%60?String(m%60).padStart(2,'0'):'')):(m+'m'); }
-function cycleGoal(){ const o=[60,120,180,240]; let i=o.indexOf(S.goalMin||120); S.goalMin=o[(i+1)%o.length]; save(); renderGoal(); flash('Objectif : '+(S.goalMin/60)+'h par jour'); }
+function goalLabel(g){ const h=Math.floor(g/60), m=g%60; if(h&&m)return h+'h'+String(m).padStart(2,'0'); if(h)return h+'h'; return m+'min'; }
+function goalAdjust(unit,dir){ let g=S.goalMin||120; g+=dir*(unit==='h'?60:5); g=Math.max(5,Math.min(600,g)); S.goalMin=g; save(); renderGoal(); }
+function toggleGoalPop(){ if($('goalPop'))$('goalPop').classList.toggle('open'); }
 function renderGoal(){ const log=S.studyLog||{}; const today=log[todayKey()]||0; const goal=S.goalMin||120; let total=0; for(const k in log) total+=log[k];
   const C=326.7, pct=Math.max(0,Math.min(1,goal>0?today/goal:0));
   if($('goalRing')){ $('goalRing').style.strokeDashoffset=C*(1-pct); $('goalRing').classList.toggle('done',pct>=1); }
   if($('goalToday'))$('goalToday').textContent=fmtHM(today);
-  if($('goalOf'))$('goalOf').textContent='/ '+(goal/60)+'h';
-  if($('goalGoalLbl'))$('goalGoalLbl').textContent=(goal/60)+'h';
+  if($('goalOf'))$('goalOf').textContent='/ '+goalLabel(goal);
+  if($('goalGoalLbl'))$('goalGoalLbl').textContent=goalLabel(goal);
+  if($('gpH'))$('gpH').textContent=Math.floor(goal/60);
+  if($('gpM'))$('gpM').textContent=String(goal%60).padStart(2,'0');
   if($('goalTotal'))$('goalTotal').textContent=fmtHM(total);
-  if($('goalEdit'))$('goalEdit').onclick=cycleGoal; }
+  if($('goalEdit'))$('goalEdit').onclick=toggleGoalPop;
+  if($('gpHm'))$('gpHm').onclick=()=>goalAdjust('h',-1);
+  if($('gpHp'))$('gpHp').onclick=()=>goalAdjust('h',1);
+  if($('gpMm'))$('gpMm').onclick=()=>goalAdjust('m',-1);
+  if($('gpMp'))$('gpMp').onclick=()=>goalAdjust('m',1); }
 function renderReport(){
   renderGoal();
   if(repPeriod==='reg'){ if($('repBarsView'))$('repBarsView').style.display='none'; if($('repRegView'))$('repRegView').style.display=''; renderReg(); return; }
