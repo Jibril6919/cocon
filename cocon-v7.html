@@ -1559,7 +1559,7 @@ async function classEnter(code,name,isPublic,creator,timer){
   ch.on('broadcast',{event:'pomo'},({payload})=>onPomoSync(payload));
   ch.on('broadcast',{event:'clsvid'},({payload})=>{ if(payload&&payload.url) playClassVid(payload.url); else stopClassVid(); });
   ch.on('broadcast',{event:'classbg'},()=>{ if(typeof loadClassBg==='function') loadClassBg(); });
-  ch.subscribe(async (st)=>{ if(st==='SUBSCRIBED'){ inClass=true; await ch.track(myPresence()); onClassEntered(); } else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){ flash('Connexion classe échouée'); } });
+  ch.subscribe(async (st)=>{ if(st==='SUBSCRIBED'){ inClass=true; if(typeof updateClassVidBtns==='function') updateClassVidBtns(); await ch.track(myPresence()); onClassEntered(); } else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){ flash('Connexion classe échouée'); } });
   applyClassTimer(classTimer);
   addMyClass({code,name:className,isPublic:classIsPublic,creator:classCreator,timer:classTimer});
 }
