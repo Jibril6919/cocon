@@ -715,7 +715,7 @@
   <div class="wp-grid" id="wpGrid"></div>
   <p class="hint">Sur mobile : choisis une photo de ta galerie. Les fonds sont gardés sur l'appareil ; « Modifier » pour en supprimer.</p>
   <div class="cls-vid" id="clsVidCtrl" style="display:none">
-    <div class="cls-tc-lbl">🎬 Vidéo de fond de la classe</div>
+    <div class="cls-tc-lbl" id="clsVidLbl">🎬 Vidéo de fond</div>
     <div class="cls-vid-row"><input id="clsVidIn" type="text" placeholder="Lien YouTube…" autocomplete="off" spellcheck="false"/><button class="cls-vid-go" id="clsVidGo" type="button">OK</button></div>
     <button class="cls-vid-clear" id="clsVidClear" type="button" style="display:none">✕ Retirer la vidéo</button>
   </div>
@@ -1035,7 +1035,7 @@ const Store = {
 
 /* ===================== STATE ===================== */
 const DEF={ roomName:'', tom:0, dur:{focus:25,short:5,long:15}, longEvery:4, auto:false, chime:true, notif:false,
-  ambVol:50, ytVol:70, radioVol:60, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, goalMin:120, studyLog:{}, myClasses:[], profLevel:null, profCode:'' };
+  ambVol:50, ytVol:70, radioVol:60, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, goalMin:120, vidBg:'', studyLog:{}, myClasses:[], profLevel:null, profCode:'' };
 let S=JSON.parse(JSON.stringify(DEF));
 let mode='focus', running=false, remaining=1500, total=1500, ticker=null, focusDone=0;
 const PHASE={focus:'focus',short:'pause',long:'longue'};
@@ -1302,49 +1302,63 @@ window.onYouTubeIframeAPIReady=function(){ ytPlayer=new YT.Player('ytFrame',{ wi
   events:{onReady:()=>{ytReady=true;ytPlayer.setVolume(S.ytVol);if(ytPend){playYt(ytPend);ytPend=null;}ytBgInit();},
     onStateChange:e=>{ if(e.data===YT.PlayerState.ENDED){ytPlayer.playVideo();return;} if(e.data===YT.PlayerState.PLAYING){$('nowIco').textContent='⏸️';$('nowIco').classList.add('playable');} else if(e.data===YT.PlayerState.PAUSED){$('nowIco').textContent='▶️';} }}}); };
 (function(){const t=document.createElement('script');t.src='https://www.youtube.com/iframe_api';document.head.appendChild(t);})();
-/* ---- class background video (YouTube) ---- */
-let ytBg=null, ytBgReady=false, ytBgPend=null, clsVidUrl=null, clsVidSound=false;
+/* ---- background video (YouTube) : solo ou classe ---- */
+let ytBg=null, ytBgReady=false, ytBgPend=null, curVidUrl=null, classVidUrl=null, clsVidSound=false;
 function ytBgInit(){ if(ytBg||!window.YT||!window.YT.Player)return;
   try{ ytBg=new YT.Player('ytBgFrame',{ width:'100%',height:'100%',
     playerVars:{autoplay:1,controls:0,disablekb:1,modestbranding:1,rel:0,playsinline:1,iv_load_policy:3,fs:0,mute:1},
-    events:{ onReady:()=>{ ytBgReady=true; try{ytBg.mute();}catch(e){} if(ytBgPend){ const u=ytBgPend; ytBgPend=null; playClassVid(u); } },
+    events:{ onReady:()=>{ ytBgReady=true; try{ytBg.mute();}catch(e){} if(ytBgPend){ const u=ytBgPend; ytBgPend=null; playVidBg(u); } },
       onStateChange:e=>{ if(e.data===YT.PlayerState.ENDED){ try{ ytBg.seekTo(0); ytBg.playVideo(); }catch(err){} } } } }); }catch(e){} }
-function playClassVid(url){ const id=ytId(url); if(!id)return; clsVidUrl=url;
+function inCls(){ return (typeof inClass!=='undefined'&&inClass); }
+function vidClassMode(){ return inCls() && (typeof classCreator!=='undefined'&&classCreator); }
+function vidCanEdit(){ return !inCls() || (typeof classCreator!=='undefined'&&classCreator); }
+function playVidBg(url){ const id=ytId(url); if(!id)return; curVidUrl=url;
   if(!ytBgReady){ ytBgPend=url; ytBgInit(); updateClassVidBtns(); return; }
   try{ ytBg.loadVideoById(id); if(clsVidSound){ ytBg.unMute(); ytBg.setVolume(70); } else { ytBg.mute(); } ytBg.playVideo(); }catch(e){}
   document.body.dataset.clsvid='on'; updateClassVidBtns(); }
-function stopClassVid(){ clsVidUrl=null; clsVidSound=false; ytBgPend=null;
+function stopVidBg(){ curVidUrl=null; clsVidSound=false; ytBgPend=null;
   try{ if(ytBg&&ytBgReady){ ytBg.stopVideo(); ytBg.mute(); } }catch(e){}
-  document.body.dataset.clsvid=''; if($('clsVidIn'))$('clsVidIn').value=''; updateClassVidBtns(); }
-function toggleClassVidSound(){ if(!clsVidUrl||!ytBgReady)return; clsVidSound=!clsVidSound;
+  document.body.dataset.clsvid=''; updateClassVidBtns(); }
+function applyVidBg(){ const want=(inCls()&&classVidUrl)?classVidUrl:((S.vidBg)||null);
+  if(!want){ stopVidBg(); return; }
+  if(want===curVidUrl){ updateClassVidBtns(); return; }
+  playVidBg(want); }
+function stopClassVid(){ classVidUrl=null; applyVidBg(); }
+function toggleClassVidSound(){ if(!curVidUrl||!ytBgReady)return; clsVidSound=!clsVidSound;
   try{ if(clsVidSound){ ytBg.unMute(); ytBg.setVolume(70);
       if(ytPlayer&&ytReady){ try{ ytPlayer.pauseVideo(); }catch(e){} if($('nowIco'))$('nowIco').textContent='\u25b6\ufe0f'; }
       flash('Son de la vid\u00e9o activ\u00e9 \ud83d\udd0a'); }
     else { ytBg.mute(); flash('Vid\u00e9o en sourdine'); } }catch(e){}
   updateClassVidBtns(); }
-function updateClassVidBtns(){ const on=!!clsVidUrl, creat=(typeof classCreator!=='undefined'&&classCreator)&&(typeof inClass!=='undefined'&&inClass);
-  if($('clsVidCtrl')) $('clsVidCtrl').style.display=creat?'block':'none';
-  if($('clsVidHint')) $('clsVidHint').style.display=(creat||on)?'block':'none';
-  if($('clsVidClear')) $('clsVidClear').style.display=(creat&&on)?'block':'none';
+function updateClassVidBtns(){ const on=!!curVidUrl, edit=vidCanEdit(), cls=vidClassMode();
+  const mine=cls?(classVidUrl||''):((S.vidBg)||'');
+  if($('clsVidCtrl')) $('clsVidCtrl').style.display=edit?'block':'none';
+  if($('clsVidLbl')) $('clsVidLbl').textContent=cls?'\ud83c\udfac Vid\u00e9o de fond de la classe':'\ud83c\udfac Vid\u00e9o de fond';
+  if($('clsVidHint')){ $('clsVidHint').style.display=(edit||on)?'block':'none';
+    $('clsVidHint').textContent=cls?'Partag\u00e9e avec toute la classe. Chacun active le son de son c\u00f4t\u00e9.':'Juste pour toi. Dans une classe, c\u2019est le cr\u00e9ateur qui choisit la vid\u00e9o.'; }
+  if($('clsVidClear')) $('clsVidClear').style.display=(edit&&mine)?'block':'none';
   if($('clsVidSnd')){ $('clsVidSnd').style.display=on?'block':'none';
     $('clsVidSnd').textContent=clsVidSound?'\ud83d\udd0a Couper le son de la vid\u00e9o':'\ud83d\udd07 Activer le son de la vid\u00e9o'; }
-  if($('clsVidIn')&&on&&document.activeElement!==$('clsVidIn')) $('clsVidIn').value=clsVidUrl; }
-async function setClassVid(url){ if(!(typeof classCreator!=='undefined'&&classCreator)||!classCode)return;
-  url=(url||'').trim(); const id=url?ytId(url):null;
+  if($('clsVidIn')&&document.activeElement!==$('clsVidIn')) $('clsVidIn').value=mine; }
+async function setVidBg(url){ url=(url||'').trim(); const id=url?ytId(url):null;
   if(url&&!id){ flash('Lien YouTube non reconnu'); return; }
   const val=id?('https://www.youtube.com/watch?v='+id):null;
-  if(val) playClassVid(val); else stopClassVid();
-  try{ await sbAuth('/rest/v1/classes?code=eq.'+encodeURIComponent(classCode),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({bg_yt:val})}); }catch(e){}
-  if(classCh){ try{ classCh.send({type:'broadcast',event:'clsvid',payload:{url:val}}); }catch(e){} }
-  flash(val?'Vid\u00e9o de fond partag\u00e9e \ud83c\udfac':'Vid\u00e9o retir\u00e9e'); }
-async function loadClassVid(){ if(!classCode){ stopClassVid(); return; } let u=null;
+  if(vidClassMode()&&classCode){ classVidUrl=val; applyVidBg();
+    try{ await sbAuth('/rest/v1/classes?code=eq.'+encodeURIComponent(classCode),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({bg_yt:val})}); }catch(e){}
+    if(classCh){ try{ classCh.send({type:'broadcast',event:'clsvid',payload:{url:val}}); }catch(e){} }
+    flash(val?'Vid\u00e9o partag\u00e9e avec la classe \ud83c\udfac':'Vid\u00e9o retir\u00e9e'); }
+  else { S.vidBg=val||''; save(); applyVidBg();
+    flash(val?'Vid\u00e9o de fond appliqu\u00e9e \ud83c\udfac':'Vid\u00e9o retir\u00e9e'); } }
+async function loadClassVid(){ if(!classCode){ classVidUrl=null; applyVidBg(); return; } let u=null;
   try{ const r=await sbAuth('/rest/v1/classes?code=eq.'+encodeURIComponent(classCode)+'&select=bg_yt'); const a=await r.json().catch(()=>null); u=(a&&a[0]&&a[0].bg_yt)||null; }catch(e){}
-  if(u) playClassVid(u); else stopClassVid(); }
-document.addEventListener('click',()=>{ if(clsVidUrl&&ytBgReady){ try{ if(ytBg.getPlayerState()!==1) ytBg.playVideo(); }catch(e){} } },{passive:true});
-if($('clsVidGo')) $('clsVidGo').onclick=()=>setClassVid($('clsVidIn').value);
-if($('clsVidClear')) $('clsVidClear').onclick=()=>setClassVid('');
+  classVidUrl=u; applyVidBg(); }
+document.addEventListener('click',()=>{ if(curVidUrl&&ytBgReady){ try{ if(ytBg.getPlayerState()!==1) ytBg.playVideo(); }catch(e){} } },{passive:true});
+if($('clsVidGo')) $('clsVidGo').onclick=()=>setVidBg($('clsVidIn').value);
+if($('clsVidClear')) $('clsVidClear').onclick=()=>setVidBg('');
 if($('clsVidSnd')) $('clsVidSnd').onclick=toggleClassVidSound;
-if($('clsVidIn')) $('clsVidIn').onkeydown=e=>{ if(e.key==='Enter') setClassVid($('clsVidIn').value); };
+if($('clsVidIn')) $('clsVidIn').onkeydown=e=>{ if(e.key==='Enter') setVidBg($('clsVidIn').value); };
+applyVidBg();
+
 function playYt(url){ const id=ytId(url); if(!id){flash('Lien YouTube non reconnu');return;}
   hideSpot(); if(!ytReady){ytPend=url;$('nowIco').textContent='⏳';return;}
   ytPlayer.loadVideoById(id); ytPlayer.setVolume(S.ytVol); ytPlayer.playVideo();
@@ -1559,7 +1573,7 @@ async function classEnter(code,name,isPublic,creator,timer){
   ch.on('broadcast',{event:'signal'},({payload})=>onSignal(payload));
   ch.on('broadcast',{event:'timer'},({payload})=>onClassTimer(payload));
   ch.on('broadcast',{event:'pomo'},({payload})=>onPomoSync(payload));
-  ch.on('broadcast',{event:'clsvid'},({payload})=>{ if(payload&&payload.url) playClassVid(payload.url); else stopClassVid(); });
+  ch.on('broadcast',{event:'clsvid'},({payload})=>{ classVidUrl=(payload&&payload.url)||null; applyVidBg(); });
   ch.on('broadcast',{event:'classbg'},()=>{ if(typeof loadClassBg==='function') loadClassBg(); });
   ch.subscribe(async (st)=>{ if(st==='SUBSCRIBED'){ inClass=true; if(typeof updateClassVidBtns==='function') updateClassVidBtns(); await ch.track(myPresence()); onClassEntered(); } else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){ flash('Connexion classe échouée'); } });
   applyClassTimer(classTimer);
