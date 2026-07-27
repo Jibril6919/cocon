@@ -1357,7 +1357,7 @@ if($('clsVidGo')) $('clsVidGo').onclick=()=>setVidBg($('clsVidIn').value);
 if($('clsVidClear')) $('clsVidClear').onclick=()=>setVidBg('');
 if($('clsVidSnd')) $('clsVidSnd').onclick=toggleClassVidSound;
 if($('clsVidIn')) $('clsVidIn').onkeydown=e=>{ if(e.key==='Enter') setVidBg($('clsVidIn').value); };
-applyVidBg();
+setTimeout(function(){ try{ applyVidBg(); }catch(e){ console.warn('vidbg',e); } },0);
 
 function playYt(url){ const id=ytId(url); if(!id){flash('Lien YouTube non reconnu');return;}
   hideSpot(); if(!ytReady){ytPend=url;$('nowIco').textContent='⏳';return;}
