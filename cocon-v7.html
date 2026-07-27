@@ -1838,9 +1838,16 @@ function compressDataURL(dataURL){ return new Promise((res)=>{ const img=new Ima
 /* ----- bibliothèque de fonds (IndexedDB + repli inline) ----- */
 let idbOK=(typeof indexedDB!=='undefined'), wpData={}, wpEdit=false;
 const IDB={ db:null,
-  open(){ if(this.db)return Promise.resolve(this.db); return new Promise((res,rej)=>{ const r=indexedDB.open('cocon-db',1);
+  open(){ if(this.db)return Promise.resolve(this.db); return new Promise((res,rej)=>{ let done=false;
+    const fin=(fn,v)=>{ if(done)return; done=true; fn(v); };
+    const to=setTimeout(()=>fin(rej,new Error('idb-timeout')),4000);
+    let r; try{ r=indexedDB.open('cocon-db',1); }catch(e){ clearTimeout(to); fin(rej,e); return; }
     r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains('wp')) r.result.createObjectStore('wp'); };
-    r.onsuccess=()=>{this.db=r.result;res(this.db);}; r.onerror=()=>rej(r.error); }); },
+    r.onsuccess=()=>{ clearTimeout(to); this.db=r.result;
+      try{ this.db.onversionchange=()=>{ try{this.db.close();}catch(e){} this.db=null; }; }catch(e){}
+      fin(res,this.db); };
+    r.onerror=()=>{ clearTimeout(to); fin(rej,r.error); };
+    r.onblocked=()=>{ clearTimeout(to); fin(rej,new Error('idb-blocked')); }; }); },
   async set(k,v){ const db=await this.open(); return new Promise((res,rej)=>{ const t=db.transaction('wp','readwrite'); t.objectStore('wp').put(v,k); t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); },
   async get(k){ const db=await this.open(); return new Promise((res,rej)=>{ const t=db.transaction('wp','readonly'); const q=t.objectStore('wp').get(k); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); },
   async del(k){ const db=await this.open(); return new Promise((res,rej)=>{ const t=db.transaction('wp','readwrite'); t.objectStore('wp').delete(k); t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
@@ -2105,7 +2112,7 @@ async function cloudLoadRoom(){ if(!cloudUser)return null; let r=await sbFetch('
 async function cloudSaveRoom(){ if(!cloudMode||!cloudUser)return; const body=JSON.stringify({user_id:cloudUser.id,data:S,updated_at:new Date().toISOString()}); const o={method:'POST',headers:Object.assign({Prefer:'resolution=merge-duplicates'},authHeaders()),body}; let r=await sbFetch('/rest/v1/rooms',o); if(r.status===401&&await authRefresh()){ o.headers=Object.assign({Prefer:'resolution=merge-duplicates'},authHeaders()); await sbFetch('/rest/v1/rooms',o); } }
 function cloudSaveDebounced(){ clearTimeout(cloudSaveT); cloudSaveT=setTimeout(cloudSaveRoom,1200); }
 async function startCloud(){ cloudMode=true; activeId=null; KEY='cocon:cloudcache:'+(cloudUser?cloudUser.id:'x');
-  let data=null; try{ data=await cloudLoadRoom(); }catch(e){}
+  let data=null; try{ data=await Promise.race([cloudLoadRoom(), new Promise(r=>setTimeout(()=>r(null),8000))]); }catch(e){}
   if(data){ S=Object.assign(JSON.parse(JSON.stringify(DEF)),data); } else { await loadRoom(); }
   await migrateBg(); purgeDoneTasks(); clearChat(); await fillUI();
   renderMenuAccount(); if(typeof renderMyClasses==="function")renderMyClasses(); if(typeof profileUpsert==="function")profileUpsert(); if(typeof loadRequests==="function")loadRequests();
@@ -2129,7 +2136,7 @@ async function doCloudAuth(){ const email=$('cEmail').value.trim(), pw=$('cPw').
       else { $('cloudMsg').textContent='Compte créé ✓ Vérifie ta boîte mail, clique le lien de confirmation, puis connecte-toi.'; }
     } else { const d=await authSignin(email,pw); setSession(d); await startCloud(); }
   }catch(e){ $('cloudMsg').textContent=e.message||'Erreur'; }
-  $('cloudGo').disabled=false; }
+  finally{ if($('cloudGo'))$('cloudGo').disabled=false; } }
 function openRecoverySheet(){ $('gate').classList.add('show'); $('gateCreate').classList.remove('show'); $('gatePin').classList.remove('show'); if($('cloudForms'))$('cloudForms').style.display='none'; if($('gateReset'))$('gateReset').classList.add('show'); }
 async function checkAuthRedirect(){
   const hash=location.hash||'', qs=location.search||'';
