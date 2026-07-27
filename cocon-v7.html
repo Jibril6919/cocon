@@ -714,6 +714,13 @@
   <input type="file" id="bgFile" accept="image/*" hidden/>
   <div class="wp-grid" id="wpGrid"></div>
   <p class="hint">Sur mobile : choisis une photo de ta galerie. Les fonds sont gardés sur l'appareil ; « Modifier » pour en supprimer.</p>
+  <div class="cls-vid" id="clsVidCtrl" style="display:none">
+    <div class="cls-tc-lbl">🎬 Vidéo de fond de la classe</div>
+    <div class="cls-vid-row"><input id="clsVidIn" type="text" placeholder="Lien YouTube…" autocomplete="off" spellcheck="false"/><button class="cls-vid-go" id="clsVidGo" type="button">OK</button></div>
+    <button class="cls-vid-clear" id="clsVidClear" type="button" style="display:none">✕ Retirer la vidéo</button>
+  </div>
+  <button class="cls-vidsnd" id="clsVidSnd" type="button" style="display:none">🔇 Activer le son de la vidéo</button>
+  <p class="hint" id="clsVidHint" style="display:none">Partagée avec toute la classe. Seul le créateur peut la changer ; chacun active le son de son côté.</p>
 </div>
 
 <div class="panel panel-full" id="panel-settings">
@@ -870,12 +877,6 @@
   <div class="cls-hint">Partage ce code (ou le nom). 💬 chat, 🎙️ micro et 📷/🖥️ caméra-écran sont partagés avec la classe.</div>
   <div class="cls-mem-h">Connectés (<span id="clsCount">1</span>)</div>
   <div class="cls-members" id="clsMembers"></div>
-  <div class="cls-vid" id="clsVidCtrl" style="display:none">
-    <div class="cls-tc-lbl">🎬 Vidéo de fond (pour tout le monde)</div>
-    <div class="cls-vid-row"><input id="clsVidIn" type="text" placeholder="Lien YouTube…" autocomplete="off" spellcheck="false"/><button class="cls-vid-go" id="clsVidGo" type="button">OK</button></div>
-    <button class="cls-vid-clear" id="clsVidClear" type="button" style="display:none">✕ Retirer la vidéo</button>
-  </div>
-  <button class="cls-vidsnd" id="clsVidSnd" type="button" style="display:none">🔇 Activer le son de la vidéo</button>
   <button class="cls-bg" id="clsBgBtn" type="button" style="display:none">🖼️ Appliquer le fond de la classe</button>
   <button class="cls-bgdl" id="clsBgDl" type="button" style="display:none">⬇️ Télécharger le fond</button>
   <button class="cls-settings" id="clsSettings" type="button" style="display:none">⚙️ Réglages de la classe</button>
@@ -1323,6 +1324,7 @@ function toggleClassVidSound(){ if(!clsVidUrl||!ytBgReady)return; clsVidSound=!c
   updateClassVidBtns(); }
 function updateClassVidBtns(){ const on=!!clsVidUrl, creat=(typeof classCreator!=='undefined'&&classCreator)&&(typeof inClass!=='undefined'&&inClass);
   if($('clsVidCtrl')) $('clsVidCtrl').style.display=creat?'block':'none';
+  if($('clsVidHint')) $('clsVidHint').style.display=(creat||on)?'block':'none';
   if($('clsVidClear')) $('clsVidClear').style.display=(creat&&on)?'block':'none';
   if($('clsVidSnd')){ $('clsVidSnd').style.display=on?'block':'none';
     $('clsVidSnd').textContent=clsVidSound?'\ud83d\udd0a Couper le son de la vid\u00e9o':'\ud83d\udd07 Activer le son de la vid\u00e9o'; }
