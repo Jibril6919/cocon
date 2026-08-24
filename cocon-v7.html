@@ -624,6 +624,23 @@
     background:transparent;color:var(--muted);font-size:13px;cursor:pointer;line-height:1;font-family:inherit;}
   .bnd-empty{font-size:12px;color:var(--muted);text-align:center;padding:20px 10px;line-height:1.6;}
   .bnd-foot{font-size:11px;color:var(--muted);margin-top:11px;text-align:center;}
+
+  /* --- classeur : petit panneau au-dessus du dock (mobile) --- */
+  @media(max-width:640px){
+    .panel.panel-sm{right:50%;left:auto;top:auto;transform:translateX(50%) translateY(10px);
+      bottom:calc(max(14px,env(safe-area-inset-bottom)) + 118px);
+      width:calc(100vw - 28px);max-width:380px;max-height:min(64vh,520px);}
+    .panel.panel-sm.open{transform:translateX(50%) translateY(0);}
+  }
+  .bnd-top{display:flex;align-items:flex-start;gap:8px;}
+  .bnd-top .bnd-crumb{flex:1;min-width:0;}
+  .bnd-exp{flex:0 0 auto;width:28px;height:28px;border-radius:9px;border:1px solid var(--line);
+    background:rgba(243,233,218,.06);color:var(--cream);font-size:13px;line-height:1;cursor:pointer;font-family:inherit;}
+  .bnd-exp:active{transform:scale(.9);}
+  .bnd-exp svg{width:15px;height:15px;display:block;margin:auto;}
+  .bnd-search{width:100%;background:rgba(243,233,218,.06);border:1px solid var(--line);color:var(--cream);
+    border-radius:10px;padding:8px 10px;font-size:12.5px;font-family:inherit;margin-bottom:9px;}
+  .bnd-search:focus{outline:none;border-color:var(--accent);}
 </style>
 </head>
 <body data-mode="focus">
@@ -726,7 +743,8 @@
 <div class="panel panel-sm" id="panel-binder">
   <h3>🗂️ Classeur</h3>
   <p class="ptxt">Range tes cours en dossiers.</p>
-  <div class="bnd-crumb" id="bndCrumb"></div>
+  <div class="bnd-top"><div class="bnd-crumb" id="bndCrumb"></div><button class="bnd-exp" id="bndExpand" type="button" title="Agrandir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></button></div>
+  <input class="bnd-search" id="bndSearch" type="text" placeholder="Rechercher dans tout le classeur…" autocomplete="off"/>
   <div class="bnd-acts">
     <button id="bndNewFolder" type="button">📁 Dossier</button>
     <button id="bndUpBtn" type="button">⬆️ Fichier</button>
@@ -1103,7 +1121,7 @@ const Store = {
 
 /* ===================== STATE ===================== */
 const DEF={ roomName:'', tom:0, dur:{focus:25,short:5,long:15}, longEvery:4, auto:false, chime:true, notif:false,
-  ambVol:50, ytVol:70, radioVol:60, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, goalMin:120, vidBg:'', studyLog:{}, myClasses:[], profLevel:null, profCode:'' };
+  ambVol:50, ytVol:70, radioVol:60, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, goalMin:120, vidBg:'', bndBig:false, studyLog:{}, myClasses:[], profLevel:null, profCode:'' };
 let S=JSON.parse(JSON.stringify(DEF));
 let mode='focus', running=false, remaining=1500, total=1500, ticker=null, focusDone=0;
 const PHASE={focus:'focus',short:'pause',long:'longue'};
@@ -1132,7 +1150,7 @@ const $=id=>document.getElementById(id);
 
 /* ===================== PANELS ===================== */
 let activePanel=null;
-const WIN_TITLES={pomo:'Minuteur',tasks:'T\u00e2ches',chat:'Chat',bg:'Fonds',sounds:'Sons',report:'Rapport',friends:'Amis',myclasses:'Mes classes',search:'Rechercher',create:'Cr\u00e9er une classe',class:'Classe',classset:'R\u00e9glages de la classe',settings:'R\u00e9glages',about:'\u00c0 propos'};
+const WIN_TITLES={pomo:'Minuteur',tasks:'T\u00e2ches',chat:'Chat',bg:'Fonds',sounds:'Sons',report:'Rapport',friends:'Amis',myclasses:'Mes classes',search:'Rechercher',create:'Cr\u00e9er une classe',class:'Classe',classset:'R\u00e9glages de la classe',binder:'Classeur',settings:'R\u00e9glages',about:'\u00c0 propos'};
 function mirrorWinTimer(){ const t=$('pClock'), w=$('winClsTimer'); if(t&&w) w.textContent=t.textContent; }
 function updateWinCls(){ const el=$('winCls'); if(!el)return;
   const on=(typeof inClass!=='undefined'&&inClass);
@@ -1151,7 +1169,7 @@ function openPanel(name){
   if(activePanel===name){ activePanel=null; setWinChrome(null); return; }
   $('panel-'+name).classList.add('open'); activePanel=name; setWinChrome(name);
   if(name==='report'&&typeof renderReport==='function') renderReport();
-  if(name==='binder'&&typeof bndLoad==='function') bndLoad();
+  if(name==='binder'&&typeof bndLoad==='function'){ if(typeof bndApplySize==='function') bndApplySize(); bndLoad(); }
 }
 function closePanelEl(p){ if(!p)return; p.classList.remove('open'); const name=p.id.replace('panel-',''); if(activePanel===name)activePanel=null; document.querySelectorAll('.dbtn[data-panel="'+name+'"]').forEach(d=>d.classList.remove('active')); setWinChrome(activePanel); }
 document.querySelectorAll('.panel').forEach(p=>{ const b=document.createElement('button'); b.className='panel-x'; b.type='button'; b.setAttribute('aria-label','Fermer'); b.textContent='✕'; b.onclick=()=>closePanelEl(p); p.appendChild(b); });
@@ -1473,8 +1491,10 @@ function bndMsg(html){ const l=$('bndList'); if(l) l.innerHTML='<div class="bnd-
 async function bndLoad(){
   bndCrumb(); if($('bndFoot'))$('bndFoot').textContent='';
   if(!isCloud()){ bndMsg('Connecte-toi \u00e0 ton compte cloud<br>pour utiliser le classeur.'); return; }
-  const p=bndParent();
-  const q='/rest/v1/binder?select=*&'+(p?('parent=eq.'+encodeURIComponent(p)):'parent=is.null');
+  const term=(($('bndSearch')&&$('bndSearch').value)||'').trim();
+  let q;
+  if(term){ q='/rest/v1/binder?select=*&name=ilike.'+encodeURIComponent('*'+term+'*'); }
+  else { const p=bndParent(); q='/rest/v1/binder?select=*&'+(p?('parent=eq.'+encodeURIComponent(p)):'parent=is.null'); }
   let rows=null;
   try{ const r=await sbAuth(q); if(r.ok) rows=await r.json(); else rows=null; }catch(e){ rows=null; }
   if(!rows){ bndMsg('Classeur pas encore install\u00e9.<br>Lance le SQL fourni dans Supabase.'); return; }
@@ -1540,6 +1560,16 @@ async function bndDel(it){
     await sbAuth('/rest/v1/binder?id=eq.'+encodeURIComponent(it.id),{method:'DELETE',headers:{Prefer:'return=minimal'}});
     bndLoad();
   }catch(e){ flash('Suppression impossible'); } }
+const BND_SVG_MAX='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>';
+const BND_SVG_MIN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>';
+function bndApplySize(){ const p=$('panel-binder'); if(!p)return;
+  const big=!!(S&&S.bndBig);
+  p.classList.toggle('panel-sm',!big);
+  if($('bndExpand')){ $('bndExpand').innerHTML=big?BND_SVG_MIN:BND_SVG_MAX; $('bndExpand').title=big?'R\u00e9duire':'Agrandir'; }
+  if(typeof setWinChrome==='function'&&activePanel==='binder') setWinChrome('binder'); }
+function bndToggleSize(){ S.bndBig=!(S&&S.bndBig); save(); bndApplySize(); }
+if($('bndExpand')) $('bndExpand').onclick=bndToggleSize;
+if($('bndSearch')) $('bndSearch').oninput=()=>{ clearTimeout(window._bndT); window._bndT=setTimeout(bndLoad,260); };
 if($('bndNewFolder')) $('bndNewFolder').onclick=bndNewFolder;
 if($('bndLinkBtn')) $('bndLinkBtn').onclick=bndAddLink;
 if($('bndUpBtn')) $('bndUpBtn').onclick=()=>{ if($('bndFile')) $('bndFile').click(); };
