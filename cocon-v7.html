@@ -577,11 +577,11 @@
   .panel-full.open{transform:translateY(0);}
 
   /* ===== FENETRES PLEIN ECRAN ===== */
-  .panel{inset:0;top:0;right:0;bottom:0;left:0;width:auto;max-width:none;max-height:none;
+  .panel:not(.panel-sm){inset:0;top:0;right:0;bottom:0;left:0;width:auto;max-width:none;max-height:none;
     border:0;border-radius:0;box-shadow:none;background:rgba(17,12,27,.97);
     padding:calc(env(safe-area-inset-top,0px) + 70px) max(18px,calc(50vw - 330px)) calc(env(safe-area-inset-bottom,0px) + 110px);
     transform:translateY(6px);}
-  .panel.open{transform:none;}
+  .panel.open:not(.panel-sm){transform:none;}
   .panel.panel-sm{inset:auto;right:72px;bottom:max(14px,env(safe-area-inset-bottom));left:auto;top:auto;
     width:min(330px,calc(100vw - 90px));max-height:min(74vh,560px);border:1px solid var(--line);border-radius:20px;
     padding:16px;background:rgba(20,15,30,.9);box-shadow:0 20px 60px -15px rgba(0,0,0,.6);}
