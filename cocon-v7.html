@@ -575,6 +575,34 @@
   .panel-full{left:0;right:0;top:0;bottom:0;width:100vw;max-width:100vw;height:100%;max-height:100%;border-radius:0;
     padding:max(20px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));transform:translateY(16px);overflow-y:auto;}
   .panel-full.open{transform:translateY(0);}
+
+  /* ===== FENETRES PLEIN ECRAN ===== */
+  .panel{inset:0;top:0;right:0;bottom:0;left:0;width:auto;max-width:none;max-height:none;
+    border:0;border-radius:0;box-shadow:none;background:rgba(17,12,27,.97);
+    padding:calc(env(safe-area-inset-top,0px) + 70px) max(18px,calc(50vw - 330px)) calc(env(safe-area-inset-bottom,0px) + 110px);
+    transform:translateY(6px);}
+  .panel.open{transform:none;}
+  .panel.panel-sm{inset:auto;right:72px;bottom:max(14px,env(safe-area-inset-bottom));left:auto;top:auto;
+    width:min(330px,calc(100vw - 90px));max-height:min(74vh,560px);border:1px solid var(--line);border-radius:20px;
+    padding:16px;background:rgba(20,15,30,.9);box-shadow:0 20px 60px -15px rgba(0,0,0,.6);}
+  .dock{z-index:70;}
+  body[data-win="1"] .panel-x{display:none;}
+  body[data-win="1"] .cls-pill,body[data-win="1"] .mic-pill{display:none!important;}
+  #winBar{position:fixed;top:0;left:0;right:0;z-index:80;display:none;align-items:center;gap:10px;
+    padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 10px;
+    background:linear-gradient(rgba(17,12,27,.99),rgba(17,12,27,.88));border-bottom:1px solid var(--line);
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);}
+  body[data-win="1"] #winBar{display:flex;}
+  #winBack{width:34px;height:34px;flex:0 0 auto;border-radius:10px;border:1px solid var(--line);
+    background:rgba(243,233,218,.06);color:var(--cream);font-size:19px;line-height:1;cursor:pointer;font-family:inherit;}
+  #winBack:active{transform:scale(.92);}
+  #winTitle{font-size:15px;font-weight:700;color:var(--cream);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #winCls{display:none;align-items:center;gap:7px;flex:0 0 auto;background:rgba(240,168,120,.15);
+    border:1px solid rgba(240,168,120,.38);border-radius:20px;padding:5px 11px;font-size:12.5px;color:var(--peach);}
+  #winCls.on{display:flex;}
+  #winCls b{font-weight:700;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #winClsTimer{font-variant-numeric:tabular-nums;font-weight:700;}
+  .wb-dot{width:7px;height:7px;border-radius:50%;background:#8fce7a;flex:0 0 auto;}
 </style>
 </head>
 <body data-mode="focus">
@@ -604,6 +632,7 @@
   </button>
 </div>
 
+<div id="winBar"><button id="winBack" type="button" aria-label="Retour">‹</button><span id="winTitle"></span><span id="winCls"><span class="wb-dot"></span><b id="winClsName"></b><span id="winClsTimer"></span></span></div>
 <!-- RIGHT DOCK -->
 <div class="dock">
   <button class="dbtn" data-panel="pomo"><span class="lab">Pomodoro</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M5 3L2 6m20 0l-3-3"/></svg></button>
@@ -1067,11 +1096,22 @@ const $=id=>document.getElementById(id);
 
 /* ===================== PANELS ===================== */
 let activePanel=null;
+const WIN_TITLES={pomo:'Minuteur',tasks:'T\u00e2ches',chat:'Chat',bg:'Fonds',sounds:'Sons',report:'Rapport',friends:'Amis',myclasses:'Mes classes',search:'Rechercher',create:'Cr\u00e9er une classe',class:'Classe',classset:'R\u00e9glages de la classe',settings:'R\u00e9glages',about:'\u00c0 propos'};
+function mirrorWinTimer(){ const t=$('pClock'), w=$('winClsTimer'); if(t&&w) w.textContent=t.textContent; }
+function updateWinCls(){ const el=$('winCls'); if(!el)return;
+  const on=(typeof inClass!=='undefined'&&inClass);
+  el.classList.toggle('on',!!on);
+  if(on&&$('winClsName')) $('winClsName').textContent=(typeof className!=='undefined'&&className)?className:'Classe';
+  mirrorWinTimer(); }
+function setWinChrome(name){ document.body.dataset.win=name?'1':'';
+  if(name&&$('winTitle')) $('winTitle').textContent=WIN_TITLES[name]||'';
+  if(name) updateWinCls(); }
+function closePanel(){ if(activePanel) openPanel(activePanel); }
 function openPanel(name){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('open'));
   document.querySelectorAll('.dbtn[data-panel]').forEach(b=>b.classList.toggle('active', b.dataset.panel===name && activePanel!==name));
-  if(activePanel===name){ activePanel=null; return; }
-  $('panel-'+name).classList.add('open'); activePanel=name;
+  if(activePanel===name){ activePanel=null; setWinChrome(null); return; }
+  $('panel-'+name).classList.add('open'); activePanel=name; setWinChrome(name);
   if(name==='report'&&typeof renderReport==='function') renderReport();
 }
 function closePanelEl(p){ if(!p)return; p.classList.remove('open'); const name=p.id.replace('panel-',''); if(activePanel===name)activePanel=null; document.querySelectorAll('.dbtn[data-panel="'+name+'"]').forEach(d=>d.classList.remove('active')); }
@@ -1103,6 +1143,7 @@ function accumStudy(){ studySecAccum++; if(studySecAccum>=60){ studySecAccum-=60
 function render(){
   if(pKind==='chrono'){ $('pClock').textContent=fmtLong(elapsed); $('pRing').style.strokeDashoffset=RL*(1-((elapsed%60)/60)); document.title=(running?'▶ ':'')+fmtLong(elapsed)+' · Cocon'; }
   else { $('pClock').textContent=fmt(remaining); $('pRing').style.strokeDashoffset=RL*(1-(total>0?remaining/total:0)); document.title=(running?'▶ ':'')+fmt(remaining)+' · Cocon'; }
+  mirrorWinTimer();
 }
 function armTick(){
   clearInterval(ticker); ticker=setInterval(tick,500);
@@ -1374,7 +1415,8 @@ if($('clsVidGo')) $('clsVidGo').onclick=()=>setVidBg($('clsVidIn').value);
 if($('clsVidClear')) $('clsVidClear').onclick=()=>setVidBg('');
 if($('clsVidSnd')) $('clsVidSnd').onclick=toggleClassVidSound;
 if($('clsVidIn')) $('clsVidIn').onkeydown=e=>{ if(e.key==='Enter') setVidBg($('clsVidIn').value); };
-setTimeout(function(){ try{ applyVidBg(); }catch(e){ console.warn('vidbg',e); } },0);
+setTimeout(function(){ try{ applyVidBg(); }catch(e){ console.warn('vidbg',e); }
+  try{ if($('winBack')) $('winBack').onclick=closePanel; }catch(e){} },0);
 
 function playYt(url){ const id=ytId(url); if(!id){flash('Lien YouTube non reconnu');return;}
   hideSpot(); if(!ytReady){ytPend=url;$('nowIco').textContent='⏳';return;}
