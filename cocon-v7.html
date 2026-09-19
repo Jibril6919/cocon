@@ -636,7 +636,7 @@
     color:var(--cream);border-radius:12px;padding:9px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;}
   .mini-toggle.on{background:rgba(240,168,120,.16);border-color:rgba(240,168,120,.4);color:var(--peach);}
   .mini-toggle:active{transform:scale(.97);}
-  #miniTimer{position:fixed;z-index:85;display:none;width:132px;padding:9px 10px 10px;border-radius:16px;
+  #miniTimer{position:fixed;z-index:85;display:none;width:152px;padding:9px 11px 11px;border-radius:16px;
     background:rgba(20,15,30,.92);border:1px solid var(--line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
     box-shadow:0 14px 40px -12px rgba(0,0,0,.65);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;}
   #miniTimer.on{display:block;}
@@ -646,15 +646,17 @@
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .mt-x{flex:0 0 auto;width:18px;height:18px;border:0;background:transparent;color:var(--muted);font-size:11px;
     cursor:pointer;line-height:1;padding:0;font-family:inherit;}
-  .mt-time{font-size:26px;font-weight:700;color:var(--cream);text-align:center;line-height:1.15;
+  .mt-time{font-size:27px;font-weight:700;color:var(--cream);text-align:center;line-height:1.15;
     font-variant-numeric:tabular-nums;margin:2px 0 6px;}
-  .mt-row{display:flex;align-items:center;gap:5px;}
-  .mt-tom{flex:1;min-width:0;font-size:10.5px;color:var(--muted);}
-  .mt-btn{flex:0 0 auto;width:28px;height:28px;border-radius:9px;border:1px solid var(--line);
+  .mt-row{display:flex;align-items:center;justify-content:center;gap:8px;}
+  .mt-tom{font-size:11.5px;color:var(--peach);text-align:center;margin:0 0 8px;font-weight:600;
+    background:rgba(240,168,120,.12);border-radius:8px;padding:4px 6px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mt-btn{flex:0 0 auto;width:32px;height:32px;border-radius:10px;border:1px solid var(--line);
     background:rgba(243,233,218,.07);color:var(--cream);cursor:pointer;padding:0;
     display:flex;align-items:center;justify-content:center;font-family:inherit;}
   .mt-btn:active{transform:scale(.9);}
-  .mt-btn svg{width:13px;height:13px;}
+  .mt-btn svg{width:15px;height:15px;}
   body[data-follow="1"] #miniTimer .mt-btn{display:none;}
 </style>
 </head>
@@ -689,8 +691,8 @@
 <div id="miniTimer">
   <div class="mt-head"><span class="mt-mode" id="mtMode">FOCUS</span><button class="mt-x" id="mtClose" type="button">✕</button></div>
   <div class="mt-time" id="mtTime">25:00</div>
+  <div class="mt-tom" id="mtTom">🍅 0 session</div>
   <div class="mt-row">
-    <span class="mt-tom" id="mtTom">🍅 0</span>
     <button class="mt-btn" id="mtPlay" type="button"><svg id="mtPlayI" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
     <button class="mt-btn" id="mtReset" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></button>
   </div>
@@ -1508,9 +1510,9 @@ const CHAT_BK='chat';
 let fvUrl='';
 function fileSize(n){ n=+n||0; if(n>=1048576) return (n/1048576).toFixed(1)+' Mo'; if(n>=1024) return Math.round(n/1024)+' Ko'; return n+' o'; }
 function fileIco(mime){ mime=(mime||'').toLowerCase();
-  if(mime.indexOf('pdf')>=0)return '\U0001F4D5'; if(mime.indexOf('image')===0)return '\U0001F5BC\uFE0F';
-  if(mime.indexOf('video')===0)return '\U0001F3AC'; if(mime.indexOf('audio')===0)return '\U0001F3B5';
-  if(mime.indexOf('zip')>=0||mime.indexOf('rar')>=0)return '\U0001F5DC\uFE0F'; return '\U0001F4C4'; }
+  if(mime.indexOf('pdf')>=0)return '📕'; if(mime.indexOf('image')===0)return '🖼\uFE0F';
+  if(mime.indexOf('video')===0)return '🎬'; if(mime.indexOf('audio')===0)return '🎵';
+  if(mime.indexOf('zip')>=0||mime.indexOf('rar')>=0)return '🗜\uFE0F'; return '📄'; }
 async function attSignedUrl(p){ try{ const r=await sbAuth('/storage/v1/object/sign/'+CHAT_BK+'/'+p,{method:'POST',body:JSON.stringify({expiresIn:3600})});
     const d=await r.json().catch(()=>null); return (d&&d.signedURL)?(SB_URL+'/storage/v1'+d.signedURL):''; }catch(e){ return ''; } }
 async function openAtt(att){
@@ -1563,7 +1565,11 @@ function miniPlace(){ const el=$('miniTimer'); if(!el)return;
 function miniSync(){ const el=$('miniTimer'); if(!el||!el.classList.contains('on'))return;
   const t=$('pClock'); if(t&&$('mtTime')) $('mtTime').textContent=t.textContent;
   const lab=$('pLabel'); if(lab&&$('mtMode')) $('mtMode').textContent=lab.textContent;
-  if($('mtTom')) $('mtTom').textContent='\U0001F345 '+(S.tom||0);
+  const tm=$('mtTom');
+  if(tm){ const chrono=(typeof pKind!=='undefined'&&pKind==='chrono');
+    tm.style.display=chrono?'none':'';
+    if(!chrono){ const n=+S.tom||0, every=+S.longEvery||4;
+      tm.textContent='🍅 '+n+' \u00b7 '+((n%every)+1)+'/'+every; } }
   if($('mtPlayI')) $('mtPlayI').innerHTML=(typeof running!=='undefined'&&running)
     ? '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>' : '<path d="M8 5v14l11-7z"/>'; }
 function miniApply(){ const el=$('miniTimer'); if(!el)return;
