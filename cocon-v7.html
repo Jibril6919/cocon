@@ -2392,7 +2392,10 @@ async function startCloud(){ cloudMode=true; activeId=null; KEY='cocon:cloudcach
   let data=null; try{ data=await Promise.race([cloudLoadRoom(), new Promise(r=>setTimeout(()=>r(null),8000))]); }catch(e){}
   if(data){
     const localTs=(localS&&+localS._ts)||0;
-    if(localTs && localTs > cloudRowTs + 2000){
+    /* on compare deux dates issues de la MEME horloge (celle du client) ;
+       on ne retombe sur l'horloge serveur que si le marqueur client manque */
+    const cloudTs=(+data._ts)||cloudRowTs||0;
+    if(localTs && localTs > cloudTs + 2000){
       /* le local est plus recent : on le garde et on recupere juste l'historique du cloud */
       mergeHistory(data); save();
     } else {
