@@ -630,6 +630,32 @@
   .fv-body img,.fv-body video{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;}
   .fv-body iframe{width:100%;height:100%;border:0;background:#fff;border-radius:8px;}
   .fv-msg{font-size:13px;color:var(--muted);text-align:center;line-height:1.7;padding:24px;}
+
+  /* ===== MINI CHRONO FLOTTANT ===== */
+  .mini-toggle{width:100%;margin-top:12px;background:rgba(243,233,218,.06);border:1px solid var(--line);
+    color:var(--cream);border-radius:12px;padding:9px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .mini-toggle.on{background:rgba(240,168,120,.16);border-color:rgba(240,168,120,.4);color:var(--peach);}
+  .mini-toggle:active{transform:scale(.97);}
+  #miniTimer{position:fixed;z-index:85;display:none;width:132px;padding:9px 10px 10px;border-radius:16px;
+    background:rgba(20,15,30,.92);border:1px solid var(--line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    box-shadow:0 14px 40px -12px rgba(0,0,0,.65);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;}
+  #miniTimer.on{display:block;}
+  #miniTimer.drag{cursor:grabbing;}
+  .mt-head{display:flex;align-items:center;gap:6px;}
+  .mt-mode{flex:1;min-width:0;font-size:9.5px;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mt-x{flex:0 0 auto;width:18px;height:18px;border:0;background:transparent;color:var(--muted);font-size:11px;
+    cursor:pointer;line-height:1;padding:0;font-family:inherit;}
+  .mt-time{font-size:26px;font-weight:700;color:var(--cream);text-align:center;line-height:1.15;
+    font-variant-numeric:tabular-nums;margin:2px 0 6px;}
+  .mt-row{display:flex;align-items:center;gap:5px;}
+  .mt-tom{flex:1;min-width:0;font-size:10.5px;color:var(--muted);}
+  .mt-btn{flex:0 0 auto;width:28px;height:28px;border-radius:9px;border:1px solid var(--line);
+    background:rgba(243,233,218,.07);color:var(--cream);cursor:pointer;padding:0;
+    display:flex;align-items:center;justify-content:center;font-family:inherit;}
+  .mt-btn:active{transform:scale(.9);}
+  .mt-btn svg{width:13px;height:13px;}
+  body[data-follow="1"] #miniTimer .mt-btn{display:none;}
 </style>
 </head>
 <body data-mode="focus">
@@ -660,6 +686,15 @@
 </div>
 
 <div id="winBar"><button id="winBack" type="button" aria-label="Retour">‹</button><span id="winTitle"></span><span id="winCls"><span class="wb-dot"></span><b id="winClsName"></b><span id="winClsTimer"></span></span></div>
+<div id="miniTimer">
+  <div class="mt-head"><span class="mt-mode" id="mtMode">FOCUS</span><button class="mt-x" id="mtClose" type="button">✕</button></div>
+  <div class="mt-time" id="mtTime">25:00</div>
+  <div class="mt-row">
+    <span class="mt-tom" id="mtTom">🍅 0</span>
+    <button class="mt-btn" id="mtPlay" type="button"><svg id="mtPlayI" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+    <button class="mt-btn" id="mtReset" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></button>
+  </div>
+</div>
 <!-- RIGHT DOCK -->
 <div class="dock">
   <button class="dbtn" data-panel="pomo"><span class="lab">Pomodoro</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M5 3L2 6m20 0l-3-3"/></svg></button>
@@ -716,6 +751,7 @@
     <div class="cfg"><small>Pause</small><input type="number" id="dS" min="1" max="60" value="5"/></div>
     <div class="cfg"><small>Longue</small><input type="number" id="dL" min="1" max="60" value="15"/></div>
   </div>
+  <button class="mini-toggle" id="miniToggle" type="button">📌 Mini-chrono flottant</button>
   <div id="pomoFollowNote">⏱️ Minuteur synchronisé · piloté par l’hôte de la classe</div>
   <div class="pomo-opts" id="pomoOpts">
     <div class="toggle-row"><span>Enchaîner les sessions</span><div class="sw" id="swAuto"></div></div>
@@ -1104,7 +1140,7 @@ const Store = {
 
 /* ===================== STATE ===================== */
 const DEF={ roomName:'', tom:0, dur:{focus:25,short:5,long:15}, longEvery:4, auto:false, chime:true, notif:false,
-  ambVol:50, ytVol:70, radioVol:60, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, goalMin:120, vidBg:'', studyLog:{}, myClasses:[], profLevel:null, profCode:'' };
+  ambVol:50, ytVol:70, radioVol:60, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, goalMin:120, vidBg:'', mini:false, miniXY:null, studyLog:{}, myClasses:[], profLevel:null, profCode:'' };
 let S=JSON.parse(JSON.stringify(DEF));
 let mode='focus', running=false, remaining=1500, total=1500, ticker=null, focusDone=0;
 const PHASE={focus:'focus',short:'pause',long:'longue'};
@@ -1112,12 +1148,12 @@ const PHASE={focus:'focus',short:'pause',long:'longue'};
 const SB_URL='https://edoevvagkzfmkscsoixq.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkb2V2dmFna3pmbWtzY3NvaXhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MDEzNTMsImV4cCI6MjA5Nzk3NzM1M30.jThPcTylXeh-9ARLCeLH8H3MPzCN2vDteSZxm8VLz7U';
 const SKEYS='cocon:session';
-let cloudMode=false, cloudUser=null, cloudTok=null, cloudRefresh=null;
+let cloudMode=false, cloudUser=null, cloudTok=null, cloudRefresh=null, cloudRowTs=0;
 
 /* ----- profils / comptes locaux ----- */
 const PKEY='cocon:profiles', AKEY='cocon:active';
 let profiles=[], activeId=null, KEY='cocon:room:default', saveT=null;
-function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ Store.set(KEY,JSON.stringify(S)); if(cloudMode) cloudSaveDebounced(); },250); }
+function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{ S._ts=Date.now(); }catch(e){} Store.set(KEY,JSON.stringify(S)); if(cloudMode) cloudSaveDebounced(); },250); }
 async function loadRoom(){ S=JSON.parse(JSON.stringify(DEF)); try{ const r=await Store.get(KEY); if(r) S=Object.assign(JSON.parse(JSON.stringify(DEF)),JSON.parse(r)); }catch(e){} }
 async function loadProfiles(){
   try{ const r=await Store.get(PKEY); profiles=r?JSON.parse(r):[]; }catch(e){ profiles=[]; }
@@ -1182,7 +1218,7 @@ function accumStudy(){ studySecAccum++; if(studySecAccum>=60){ studySecAccum-=60
 function render(){
   if(pKind==='chrono'){ $('pClock').textContent=fmtLong(elapsed); $('pRing').style.strokeDashoffset=RL*(1-((elapsed%60)/60)); document.title=(running?'▶ ':'')+fmtLong(elapsed)+' · Cocon'; }
   else { $('pClock').textContent=fmt(remaining); $('pRing').style.strokeDashoffset=RL*(1-(total>0?remaining/total:0)); document.title=(running?'▶ ':'')+fmt(remaining)+' · Cocon'; }
-  mirrorWinTimer();
+  mirrorWinTimer(); if(typeof miniSync==='function') miniSync();
 }
 function armTick(){
   clearInterval(ticker); ticker=setInterval(tick,500);
@@ -1212,7 +1248,7 @@ function pPause(){ running=false; setPlayIcon(false); clearInterval(ticker); tic
 function pToggle(){ running?pPause():pStart(); }
 function pReset(){ pPause(); if(pKind==='chrono'){ elapsed=0; studySecAccum=0; chronoStart=Date.now(); } else { total=S.dur[mode]*60; remaining=total; } lastTs=0; render(); broadcastPomo(); }
 function notifyCycle(ended){
-  if(S.chime){ try{ chime(); }catch(e){} }
+  if(S.chime){ try{ chime(ended==='focus'?'focusEnd':(mode==='long'?'longBreak':'breakEnd')); }catch(e){} }
   if(navigator.vibrate){ try{ navigator.vibrate([140,70,140]); }catch(e){} }
   if(S.notif && ('Notification' in window) && Notification.permission==='granted'){
     const isFocus=(ended==='focus');
@@ -1239,7 +1275,8 @@ document.querySelectorAll('.pomo-modes button').forEach(b=>b.onclick=()=>{ if(ru
   $(id).onchange=()=>{ let v=parseInt($(id).value)||DEF.dur[key]; v=Math.max(1,Math.min(120,v)); $(id).value=v; S.dur[key]=v; save(); if(!running&&mode===key)pReset(); }; });
 
 /* ----- chrono ----- */
-let pKind='pomo', elapsed=0, studySecAccum=0, endAt=0, endTimer=null, lastTs=0, chronoStart=0;
+let durMine=null;
+  let pKind='pomo', elapsed=0, studySecAccum=0, endAt=0, endTimer=null, lastTs=0, chronoStart=0;
   let classFollower=false, lastBcast=0;
 function setPKind(k){ pKind=k; pPause(); const isChrono=(k==='chrono');
   $('pkPomo').classList.toggle('on',!isChrono); if($('pkChrono'))$('pkChrono').classList.toggle('on',isChrono);
@@ -1353,7 +1390,18 @@ function toggleAmb(key,btn){ resumeCtx(); if(!ambNodes[key])ambNodes[key]=buildA
   document.querySelectorAll('.amb[data-amb]').forEach(b=>{ if(b!==btn) b.classList.remove('on'); });
   n.on=turnOn; setAmbGain(n,turnOn?(S.ambVol/100)*.5:0); btn.classList.toggle('on',n.on); }
 function refreshAmb(){ Object.values(ambNodes).forEach(n=>{if(n.on)n.g.gain.setTargetAtTime((S.ambVol/100)*.5,ctx().currentTime,.2);}); }
-function chime(){ const c=ctx();resumeCtx(); [880,1320,1760].forEach((f,i)=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=f;const t=c.currentTime+i*.12;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.2,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+1.1);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+1.2);}); }
+function chime(kind){ const c=ctx(); resumeCtx();
+  const seq = (kind==='breakEnd') ? [[523.25,0],[659.25,.10],[783.99,.20],[1046.50,.32]]
+            : (kind==='longBreak')? [[392.00,0],[523.25,.09],[659.25,.18],[783.99,.27],[1046.50,.46]]
+            : [[880.00,0],[659.25,.12],[523.25,.24]];
+  seq.forEach(function(p){ const f=p[0], t=c.currentTime+p[1];
+    [[f,'sine',.20],[f*2,'sine',.055],[f*0.5,'triangle',.045]].forEach(function(v){
+      const o=c.createOscillator(), g=c.createGain();
+      o.type=v[1]; o.frequency.value=v[0];
+      g.gain.setValueAtTime(0,t);
+      g.gain.linearRampToValueAtTime(v[2],t+.018);
+      g.gain.exponentialRampToValueAtTime(.0008,t+1.55);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+1.65); }); }); }
 document.querySelectorAll('.amb[data-amb]').forEach(b=>b.onclick=()=>toggleAmb(b.dataset.amb,b));
 const RADIO={ fluid:['https://ice5.somafm.com/fluid-128-mp3','https://ice2.somafm.com/fluid-128-mp3','https://ice.somafm.com/fluid'], groovesalad:['https://ice5.somafm.com/groovesalad-128-mp3','https://ice2.somafm.com/groovesalad-128-mp3','https://ice.somafm.com/groovesalad'], dronezone:['https://ice5.somafm.com/dronezone-128-mp3','https://ice2.somafm.com/dronezone-128-mp3','https://ice.somafm.com/dronezone'] };
 let radioKey=null;
@@ -1504,8 +1552,51 @@ if($('chatAtt')) $('chatAtt').onclick=()=>{ if($('chatFile')) $('chatFile').clic
 if($('chatFile')) $('chatFile').onchange=e=>{ sendChatFiles(e.target.files); e.target.value=''; };
 if($('fvClose')) $('fvClose').onclick=closeAttView;
 if($('fvDl')) $('fvDl').onclick=()=>{ if(fvUrl) window.open(fvUrl,'_blank','noopener'); };
+/* ===================== MINI CHRONO FLOTTANT ===================== */
+function miniPlace(){ const el=$('miniTimer'); if(!el)return;
+  let p=S.miniXY;
+  if(!p||typeof p.x!=='number'){ p={x:Math.max(12,innerWidth-156), y:Math.round(innerHeight*0.30)}; }
+  const w=el.offsetWidth||132, h=el.offsetHeight||104;
+  p.x=Math.max(6,Math.min(p.x,innerWidth-w-6));
+  p.y=Math.max(6,Math.min(p.y,innerHeight-h-6));
+  el.style.left=p.x+'px'; el.style.top=p.y+'px'; S.miniXY=p; }
+function miniSync(){ const el=$('miniTimer'); if(!el||!el.classList.contains('on'))return;
+  const t=$('pClock'); if(t&&$('mtTime')) $('mtTime').textContent=t.textContent;
+  const lab=$('pLabel'); if(lab&&$('mtMode')) $('mtMode').textContent=lab.textContent;
+  if($('mtTom')) $('mtTom').textContent='\U0001F345 '+(S.tom||0);
+  if($('mtPlayI')) $('mtPlayI').innerHTML=(typeof running!=='undefined'&&running)
+    ? '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>' : '<path d="M8 5v14l11-7z"/>'; }
+function miniApply(){ const el=$('miniTimer'); if(!el)return;
+  el.classList.toggle('on',!!S.mini);
+  if($('miniToggle')) $('miniToggle').classList.toggle('on',!!S.mini);
+  if(S.mini){ miniPlace(); miniSync(); } }
+function miniToggle(){ S.mini=!S.mini; save(); miniApply(); }
+(function(){ const el=$('miniTimer'); if(!el)return;
+  let dx=0,dy=0,moved=false;
+  el.addEventListener('pointerdown',e=>{
+    if(e.target.closest('button'))return;
+    const r=el.getBoundingClientRect(); dx=e.clientX-r.left; dy=e.clientY-r.top; moved=false;
+    el.classList.add('drag'); try{ el.setPointerCapture(e.pointerId); }catch(err){} });
+  el.addEventListener('pointermove',e=>{
+    if(!el.classList.contains('drag'))return; moved=true;
+    const w=el.offsetWidth,h=el.offsetHeight;
+    const x=Math.max(6,Math.min(e.clientX-dx,innerWidth-w-6));
+    const y=Math.max(6,Math.min(e.clientY-dy,innerHeight-h-6));
+    el.style.left=x+'px'; el.style.top=y+'px'; S.miniXY={x:x,y:y}; });
+  const up=e=>{ if(!el.classList.contains('drag'))return; el.classList.remove('drag');
+    try{ el.releasePointerCapture(e.pointerId); }catch(err){} if(moved) save(); };
+  el.addEventListener('pointerup',up); el.addEventListener('pointercancel',up);
+})();
+if($('miniToggle')) $('miniToggle').onclick=miniToggle;
+if($('mtClose')) $('mtClose').onclick=()=>{ S.mini=false; save(); miniApply(); };
+if($('mtPlay')) $('mtPlay').onclick=()=>{ if(typeof classFollower!=='undefined'&&classFollower)return;
+  if(typeof running!=='undefined'&&running){ if(typeof pPause==='function')pPause(); } else { if(typeof pStart==='function')pStart(); } miniSync(); };
+if($('mtReset')) $('mtReset').onclick=()=>{ if(typeof classFollower!=='undefined'&&classFollower)return;
+  if(typeof pReset==='function')pReset(); miniSync(); };
+addEventListener('resize',()=>{ if(S&&S.mini) miniPlace(); });
 setTimeout(function(){ try{ applyVidBg(); }catch(e){ console.warn('vidbg',e); }
-  try{ if($('winBack')) $('winBack').onclick=closePanel; }catch(e){} },0);
+  try{ if($('winBack')) $('winBack').onclick=closePanel; }catch(e){}
+  try{ if(typeof miniApply==='function') miniApply(); }catch(e){} },0);
 
 function playYt(url){ const id=ytId(url); if(!id){flash('Lien YouTube non reconnu');return;}
   hideSpot(); if(!ytReady){ytPend=url;$('nowIco').textContent='⏳';return;}
@@ -1620,9 +1711,10 @@ const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l
 function hashStr(s){ let h=5381; s=String(s); for(let i=0;i<s.length;i++){ h=((h<<5)+h)^s.charCodeAt(i); } return (h>>>0).toString(36); }
 function timerLabel(t){ if(t==='50/10')return '🍅 50/10'; if(t==='chrono')return '⏱️ Chrono'; return '🍅 25/5'; }
 function applyClassTimer(t){ if(!t) return;
+  if(durMine===null && S.dur) durMine={focus:S.dur.focus,short:S.dur.short,long:S.dur.long};
   if(t==='chrono'){ if(typeof setPKind==='function') setPKind('chrono'); return; }
   let f=25,s=5; if(t==='50/10'){ f=50; s=10; }
-  if(S.dur){ S.dur.focus=f; S.dur.short=s; save(); }
+  if(S.dur){ S.dur.focus=f; S.dur.short=s; }
   if($('dF'))$('dF').value=f; if($('dS'))$('dS').value=s;
   if(typeof setPKind==='function') setPKind('pomo');
   if(typeof pReset==='function' && typeof running!=='undefined' && !running) pReset(); }
@@ -1750,7 +1842,10 @@ async function classDelete(){ if(!classCreator){ flash('Seul le créateur peut s
 function myPresence(){ return {pid:myPid,name:myName(),emoji:myEmoji(),photo:(S.profPhoto||''),mic:!!voiceStream,vid:shareKind,uid:((cloudMode&&cloudUser)?cloudUser.id:''),code:(S.profCode||'')}; }
 function presenceUpdate(){ if(classCh&&inClass){ try{ classCh.track(myPresence()); }catch(e){} } renderMembers(); }
 function onClassEntered(){ S.chat=[]; renderChat(); updateChatNote(); renderMembers(); classFollower=(typeof inClass!=='undefined'&&inClass)&&!classCreator; document.body.dataset.follow=classFollower?'1':''; if(typeof applyClassTimer==='function'&&classTimer) applyClassTimer(classTimer); if($('clsPill'))$('clsPill').classList.add('show'); if(typeof profileSetClass==='function') profileSetClass(classCode,className); if(typeof startClassHeartbeat==='function') startClassHeartbeat(); if(typeof loadClassBg==='function') loadClassBg(); if(typeof loadClassVid==='function') loadClassVid(); if(typeof updateWinCls==='function') updateWinCls(); flash('Dans « '+className+' » 👥'); }
-function onClassLeft(){ classFollower=false; document.body.dataset.follow=''; if(typeof updateWinCls==='function') updateWinCls(); if(typeof stopClassHeartbeat==='function') stopClassHeartbeat(); if(typeof classBgOn!=='undefined'&&classBgOn){ classBgOn=false; if(typeof applyActiveBg==='function') applyActiveBg(); } classBgData=null; if(typeof updateClassBgBtns==='function') updateClassBgBtns(); if(typeof stopClassVid==='function') stopClassVid(); if($('clsPill'))$('clsPill').classList.remove('show'); S.chat=[]; renderChat(); updateChatNote(); if(activePanel==='class') closePanelEl($('panel-class')); var st=$('remoteStage'); if(st) st.classList.remove('show'); if(typeof profileSetClass==='function') profileSetClass(null,null); }
+function restoreMyDur(){ if(!durMine)return; if(S.dur){ S.dur.focus=durMine.focus; S.dur.short=durMine.short; S.dur.long=durMine.long; save(); }
+  if($('dF'))$('dF').value=S.dur.focus; if($('dS'))$('dS').value=S.dur.short; if($('dL'))$('dL').value=S.dur.long;
+  durMine=null; if(typeof pReset==='function' && typeof running!=='undefined' && !running) pReset(); }
+function onClassLeft(){ classFollower=false; document.body.dataset.follow=''; restoreMyDur(); if(typeof updateWinCls==='function') updateWinCls(); if(typeof stopClassHeartbeat==='function') stopClassHeartbeat(); if(typeof classBgOn!=='undefined'&&classBgOn){ classBgOn=false; if(typeof applyActiveBg==='function') applyActiveBg(); } classBgData=null; if(typeof updateClassBgBtns==='function') updateClassBgBtns(); if(typeof stopClassVid==='function') stopClassVid(); if($('clsPill'))$('clsPill').classList.remove('show'); S.chat=[]; renderChat(); updateChatNote(); if(activePanel==='class') closePanelEl($('panel-class')); var st=$('remoteStage'); if(st) st.classList.remove('show'); if(typeof profileSetClass==='function') profileSetClass(null,null); }
 let _clsHb=null;
 function startClassHeartbeat(){ stopClassHeartbeat(); _clsHb=setInterval(()=>{ if(typeof inClass!=='undefined'&&inClass&&typeof profileSetClass==='function') profileSetClass(classCode,className); }, 300000); }
 function stopClassHeartbeat(){ if(_clsHb){ clearInterval(_clsHb); _clsHb=null; } }
@@ -2266,12 +2361,39 @@ async function authRefresh(){ if(!cloudRefresh)return false; const r=await sbFet
 async function authRecover(email){ const rt=encodeURIComponent(location.origin+location.pathname); const r=await sbFetch('/auth/v1/recover?redirect_to='+rt,{method:'POST',body:JSON.stringify({email})}); if(!r.ok){ const d=await r.json().catch(()=>({})); throw new Error(d.msg||d.error_description||d.error||('Erreur '+r.status)); } return true; }
 async function authGetUser(){ const r=await sbFetch('/auth/v1/user',{headers:authHeaders()}); if(!r.ok)return null; return await r.json().catch(()=>null); }
 async function authUpdatePassword(pw){ const r=await sbFetch('/auth/v1/user',{method:'PUT',headers:authHeaders(),body:JSON.stringify({password:pw})}); const d=await r.json().catch(()=>({})); if(!r.ok) throw new Error(d.msg||d.error_description||d.error||('Erreur '+r.status)); return d; }
-async function cloudLoadRoom(){ if(!cloudUser)return null; let r=await sbFetch('/rest/v1/rooms?select=data&user_id=eq.'+cloudUser.id,{headers:authHeaders()}); if(r.status===401&&await authRefresh()) r=await sbFetch('/rest/v1/rooms?select=data&user_id=eq.'+cloudUser.id,{headers:authHeaders()}); if(!r.ok)return null; const a=await r.json().catch(()=>[]); return (a&&a[0])?a[0].data:null; }
-async function cloudSaveRoom(){ if(!cloudMode||!cloudUser)return; const body=JSON.stringify({user_id:cloudUser.id,data:S,updated_at:new Date().toISOString()}); const o={method:'POST',headers:Object.assign({Prefer:'resolution=merge-duplicates'},authHeaders()),body}; let r=await sbFetch('/rest/v1/rooms',o); if(r.status===401&&await authRefresh()){ o.headers=Object.assign({Prefer:'resolution=merge-duplicates'},authHeaders()); await sbFetch('/rest/v1/rooms',o); } }
+async function cloudLoadRoom(){ if(!cloudUser)return null;
+  const q='/rest/v1/rooms?select=data,updated_at&user_id=eq.'+cloudUser.id+'&order=updated_at.desc&limit=1';
+  let r=await sbFetch(q,{headers:authHeaders()});
+  if(r.status===401&&await authRefresh()) r=await sbFetch(q,{headers:authHeaders()});
+  if(!r.ok)return null; const a=await r.json().catch(()=>[]);
+  if(a&&a[0]){ cloudRowTs=Date.parse(a[0].updated_at||'')||0; return a[0].data; }
+  cloudRowTs=0; return null; }
+async function cloudSaveRoom(){ if(!cloudMode||!cloudUser)return; const body=JSON.stringify({user_id:cloudUser.id,data:S,updated_at:new Date().toISOString()}); const o={method:'POST',headers:Object.assign({Prefer:'resolution=merge-duplicates'},authHeaders()),body}; const U='/rest/v1/rooms?on_conflict=user_id';
+  let r=await sbFetch(U,o);
+  if(r.status===401&&await authRefresh()){ o.headers=Object.assign({Prefer:'resolution=merge-duplicates'},authHeaders()); r=await sbFetch(U,o); }
+  if(r&&!r.ok){ try{ const o2={method:'PATCH',headers:Object.assign({Prefer:'return=minimal'},authHeaders()),body:JSON.stringify({data:S,updated_at:new Date().toISOString()})};
+      await sbFetch('/rest/v1/rooms?user_id=eq.'+cloudUser.id,o2); }catch(e){} } }
 function cloudSaveDebounced(){ clearTimeout(cloudSaveT); cloudSaveT=setTimeout(cloudSaveRoom,1200); }
+function mergeHistory(loc){ if(!loc)return; let ch=false;
+  S.studyLog=S.studyLog||{};
+  if(loc.studyLog){ for(const k in loc.studyLog){ const a=+S.studyLog[k]||0, b=+loc.studyLog[k]||0; if(b>a){ S.studyLog[k]=b; ch=true; } } }
+  if(typeof loc.tom==='number' && loc.tom>(+S.tom||0)){ S.tom=loc.tom; ch=true; }
+  if(Array.isArray(loc.tasks) && !(Array.isArray(S.tasks)&&S.tasks.length) && loc.tasks.length){ S.tasks=loc.tasks; ch=true; }
+  return ch; }
 async function startCloud(){ cloudMode=true; activeId=null; KEY='cocon:cloudcache:'+(cloudUser?cloudUser.id:'x');
+  await loadRoom();
+  let localS=null; try{ localS=JSON.parse(JSON.stringify(S)); }catch(e){}
   let data=null; try{ data=await Promise.race([cloudLoadRoom(), new Promise(r=>setTimeout(()=>r(null),8000))]); }catch(e){}
-  if(data){ S=Object.assign(JSON.parse(JSON.stringify(DEF)),data); } else { await loadRoom(); }
+  if(data){
+    const localTs=(localS&&+localS._ts)||0;
+    if(localTs && localTs > cloudRowTs + 2000){
+      /* le local est plus recent : on le garde et on recupere juste l'historique du cloud */
+      mergeHistory(data); save();
+    } else {
+      S=Object.assign(JSON.parse(JSON.stringify(DEF)),data);
+      if(mergeHistory(localS)) save();
+    }
+  }
   await migrateBg(); purgeDoneTasks(); clearChat(); await fillUI();
   renderMenuAccount(); if(typeof renderMyClasses==="function")renderMyClasses(); if(typeof profileUpsert==="function")profileUpsert(); if(typeof loadRequests==="function")loadRequests();
   $('acctName').textContent='☁️  '+((cloudUser&&cloudUser.email)||'compte cloud');
