@@ -1602,24 +1602,33 @@ const RADIO={
   fluid:['https://ice5.somafm.com/fluid-128-mp3','https://ice2.somafm.com/fluid-128-mp3','https://ice5.somafm.com/fluid-128-aac','https://ice2.somafm.com/fluid-128-aac','https://ice.somafm.com/fluid'],
   groovesalad:['https://ice5.somafm.com/groovesalad-128-mp3','https://ice2.somafm.com/groovesalad-128-mp3','https://ice5.somafm.com/groovesalad-128-aac','https://ice2.somafm.com/groovesalad-128-aac','https://ice.somafm.com/groovesalad'],
   dronezone:['https://ice5.somafm.com/dronezone-128-mp3','https://ice2.somafm.com/dronezone-128-mp3','https://ice5.somafm.com/dronezone-128-aac','https://ice2.somafm.com/dronezone-128-aac','https://ice.somafm.com/dronezone'] };
+/* Secours chez un autre diffuseur si SomaFM refuse ton appareil / réseau */
+const RP_MELLOW=['https://stream.radioparadise.com/mellow-128','https://stream.radioparadise.com/mellow-192'];
+RADIO.fluid=RADIO.fluid.concat(RP_MELLOW);
+RADIO.groovesalad=RADIO.groovesalad.concat(RP_MELLOW);
+RADIO.dronezone=RADIO.dronezone.concat(['https://stream.radioparadise.com/serenity'],RP_MELLOW);
+/* Référent : on n'envoie pas l'adresse de ton site aux radios (certaines refusent les sites "inconnus") */
+function setReferrer(pol){ try{ let m=document.querySelector('meta[name="referrer"]');
+  if(!m){ m=document.createElement('meta'); m.name='referrer'; document.head.appendChild(m); } m.content=pol; }catch(e){} }
 let radioKey=null, radioTok=null, radioLog=[];
 function inPreview(){ try{ return location.origin==='null' || /claudeusercontent|claude\.ai|anthropic/i.test(location.hostname) || window.self!==window.top; }catch(e){ return true; } }
 function mediaErr(a){ const c=a&&a.error?a.error.code:0; return c===1?'annulé':c===2?'erreur réseau (bloqué ou hors ligne)':c===3?'flux illisible':c===4?'flux refusé / introuvable':'erreur inconnue'; }
-function shortUrl(u){ return u.replace('https://','').replace('.somafm.com',''); }
+function shortUrl(u){ return u.replace('https://','').replace('.somafm.com','').replace('stream.radioparadise.com','RadioParadise'); }
 function stopRadio(){ radioTok=null; const a=$('lofiRadio'); if(a){ try{ a.pause(); a.removeAttribute('src'); a.load(); }catch(e){} } radioKey=null; document.querySelectorAll('.amb[data-radio]').forEach(b=>b.classList.remove('on','loading')); }
 function toggleRadio(key,btn){ const a=$('lofiRadio'); if(!a)return;
   if(radioKey===key){ stopRadio(); return; }
   stopRadio();
   radioKey=key; a.volume=(S.radioVol!=null?S.radioVol:60)/100; btn.classList.add('on','loading');
-  const tok={}; radioTok=tok; radioLog=[]; const urls=RADIO[key]; let i=0, timer=null, cur='';
+  const tok={}; radioTok=tok; radioLog=[]; const urls=RADIO[key]; let i=0, timer=null, cur=''; setReferrer('no-referrer');
   const alive=()=>radioTok===tok && radioKey===key;
   function cleanup(){ clearTimeout(timer); a.removeEventListener('playing',onPlaying); a.removeEventListener('error',onErr); }
-  function onPlaying(){ if(!alive()) return; cleanup(); btn.classList.remove('loading'); radioLog.push('✅ '+shortUrl(cur)+' : joue'); }
+  function onPlaying(){ if(!alive()) return; cleanup(); btn.classList.remove('loading'); radioLog.push('✅ '+shortUrl(cur)+' : joue'); setReferrer('strict-origin-when-cross-origin');
+    if(cur.indexOf('radioparadise')>=0) flash('SomaFM ne répond pas chez toi → Radio Paradise 📻'); }
   function onErr(){ if(!alive()) return; fail(mediaErr(a)); }
   let failedAt=0;
   function fail(why){ if(failedAt===i) return; failedAt=i; radioLog.push('❌ '+shortUrl(cur)+' : '+why); cleanup(); tryNext(); }
   function tryNext(){ if(!alive()) return;
-    if(i>=urls.length){ btn.classList.remove('on','loading'); radioKey=null; radioTok=null;
+    if(i>=urls.length){ setReferrer('strict-origin-when-cross-origin'); btn.classList.remove('on','loading'); radioKey=null; radioTok=null;
       flash(inPreview()?'📻 Radio bloquée dans cet aperçu : ouvre Cocon depuis ton site':'Radio injoignable 😕 lance « Diagnostic radio »'); return; }
     cur=urls[i++]; const att=i; a.addEventListener('playing',onPlaying); a.addEventListener('error',onErr);
     timer=setTimeout(()=>{ if(alive() && att===i) fail('pas de réponse en 9 s'); },9000);
@@ -1650,16 +1659,26 @@ async function radioDiag(){ const box=$('radioDiag'), btn=$('radioDiagBtn'); if(
     +'<br><b>Service worker</b> : '+((navigator.serviceWorker&&navigator.serviceWorker.controller)?'actif':'aucun')
     +(radioLog.length?'<br><b>Dernier essai</b> :<br>'+radioLog.join('<br>'):'');
   box.innerHTML=head+'<br><b>Tests</b> :<br><span id="rdiagRes">…</span>';
-  const list=[]; Object.keys(RADIO).forEach(k=>RADIO[k].slice(0,3).forEach(u=>list.push(u)));
-  const out=[]; for(const u of list){ const r=await testStream(u);
-    out.push((r.ok?'✅ ':'❌ ')+shortUrl(u)+' : '+r.why+(r.ok?' ('+(r.ms/1000).toFixed(1)+' s)':'')); if($('rdiagRes')) $('rdiagRes').innerHTML=out.join('<br>')+'<br>…'; }
-  const okN=out.filter(x=>x.startsWith('✅')).length;
-  const verdict = okN===list.length ? '👉 Tous les serveurs marchent : le souci vient du lancement (volume à 0 ? son du téléphone coupé ?).'
-    : okN>0 ? '👉 Certains serveurs marchent : la radio devrait trouver le bon toute seule.'
-    : inPreview() ? '👉 Tout est bloqué parce que Cocon tourne dans un aperçu (ex. Claude). Ouvre-le depuis ton site.'
-    : !navigator.onLine ? '👉 Pas de connexion internet.'
-    : '👉 Tout est bloqué depuis cet appareil/réseau (Wi-Fi de la fac, bloqueur de pub, VPN…). Essaie en 4G.';
-  if($('rdiagRes')) $('rdiagRes').innerHTML=out.join('<br>')+'<br><br>'+verdict+'<br><i>Fais une capture de cet encadré si tu veux que je regarde.</i>';
+  const T=[
+    {g:'soma', lab:'SomaFM Lofi', u:RADIO.fluid[0], ref:'no-referrer'},
+    {g:'soma', lab:'SomaFM Chill', u:RADIO.groovesalad[0], ref:'no-referrer'},
+    {g:'soma', lab:'SomaFM Ambient', u:RADIO.dronezone[0], ref:'no-referrer'},
+    {g:'somaRef', lab:'SomaFM Lofi (en donnant l’adresse du site)', u:RADIO.fluid[1], ref:'strict-origin-when-cross-origin'},
+    {g:'rp', lab:'Radio Paradise Mellow', u:RP_MELLOW[0], ref:'no-referrer'},
+    {g:'rp', lab:'Radio Paradise Serenity', u:'https://stream.radioparadise.com/serenity', ref:'no-referrer'} ];
+  const out=[], ok={soma:0,somaRef:0,rp:0};
+  for(const t of T){ setReferrer(t.ref); const r=await testStream(t.u); if(r.ok) ok[t.g]++;
+    out.push((r.ok?'✅ ':'❌ ')+t.lab+' : '+r.why+(r.ok?' ('+(r.ms/1000).toFixed(1)+' s)':''));
+    if($('rdiagRes')) $('rdiagRes').innerHTML=out.join('<br>')+'<br>…'; }
+  setReferrer('strict-origin-when-cross-origin');
+  let verdict;
+  if(!ok.soma && !ok.somaRef && !ok.rp) verdict = inPreview() ? '👉 TOUT est bloqué car Cocon tourne dans un aperçu (ex. Claude) qui interdit les sites extérieurs. Ouvre Cocon depuis ton site.'
+      : !navigator.onLine ? '👉 Pas de connexion internet.'
+      : '👉 TOUT est bloqué, même un autre diffuseur : c’est ton réseau ou ton navigateur (Wi-Fi de la fac, bloqueur de pub, VPN, économiseur de données). Essaie en 4G.';
+  else if(!ok.soma && ok.rp) verdict='👉 SomaFM refuse ton appareil/réseau, mais Radio Paradise marche : Cocon bascule dessus tout seul.';
+  else if(ok.soma && !ok.somaRef) verdict='👉 SomaFM refusait les radios lancées depuis un site : corrigé (Cocon ne donne plus l’adresse du site).';
+  else verdict='👉 Les radios répondent : relance une station, elle devrait marcher. Sinon vérifie le volume et le mode silencieux.';
+  if($('rdiagRes')) $('rdiagRes').innerHTML=out.join('<br>')+'<br><br>'+verdict+'<br><i>Envoie-moi une capture de TOUT l’encadré (y compris le haut : Appareil, Adresse).</i>';
   btn.disabled=false; btn.textContent='🔧 Relancer le diagnostic'; }
 document.querySelectorAll('.amb[data-radio]').forEach(b=>b.onclick=()=>toggleRadio(b.dataset.radio,b));
 if($('radioDiagBtn')) $('radioDiagBtn').onclick=radioDiag;
