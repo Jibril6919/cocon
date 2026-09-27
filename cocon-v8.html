@@ -1676,24 +1676,22 @@ async function radioDiag(){ const box=$('radioDiag'), btn=$('radioDiagBtn'); if(
     {g:'soma', lab:'SomaFM Lofi', u:RADIO.fluid[0], ref:'no-referrer'},
     {g:'soma', lab:'SomaFM Chill', u:RADIO.groovesalad[0], ref:'no-referrer'},
     {g:'soma', lab:'SomaFM Ambient', u:RADIO.dronezone[0], ref:'no-referrer'},
-    {g:'somaRef', lab:'SomaFM Lofi (en donnant l’adresse du site)', u:RADIO.fluid[1], ref:'strict-origin-when-cross-origin'},
     {g:'rp', lab:'Radio Paradise Mellow', u:RP_MELLOW[0], ref:'no-referrer'},
     {g:'rp', lab:'Radio Paradise Serenity', u:'https://stream.radioparadise.com/serenity', ref:'no-referrer'} ];
-  const out=[], ok={soma:0,somaRef:0,rp:0};
+  const out=[], ok={soma:0,rp:0};
   for(const t of T){ setReferrer(t.ref); const r=await testStream(t.u); if(r.ok) ok[t.g]++;
     out.push((r.ok?'✅ ':'❌ ')+t.lab+' : '+r.why+(r.ok?' ('+(r.ms/1000).toFixed(1)+' s)':''));
     if($('rdiagRes')) $('rdiagRes').innerHTML=out.join('<br>')+'<br>…'; }
   setReferrer('strict-origin-when-cross-origin');
   let verdict;
   const foreignSW=!!(navigator.serviceWorker&&navigator.serviceWorker.controller&&!isCoconSW(navigator.serviceWorker.controller.scriptURL));
-  if(!ok.soma && !ok.somaRef && !ok.rp && foreignSW) verdict='👉 Un ancien service worker bloque les radios : appuie sur « 🧹 Réparer » en haut de cet encadré.';
-  else if(!ok.soma && !ok.somaRef && !ok.rp) verdict = inPreview() ? '👉 TOUT est bloqué car Cocon tourne dans un aperçu (ex. Claude) qui interdit les sites extérieurs. Ouvre Cocon depuis ton site.'
+  if(!ok.soma && !ok.rp && foreignSW) verdict='👉 Un ancien service worker bloque les radios : appuie sur « 🧹 Réparer » en haut de cet encadré.';
+  else if(!ok.soma && !ok.rp) verdict = inPreview() ? '👉 TOUT est bloqué car Cocon tourne dans un aperçu (ex. Claude) qui interdit les sites extérieurs. Ouvre Cocon depuis ton site.'
       : !navigator.onLine ? '👉 Pas de connexion internet.'
       : '👉 TOUT est bloqué, même un autre diffuseur : c’est ton réseau ou ton navigateur (Wi-Fi de la fac, bloqueur de pub, VPN, économiseur de données). Essaie en 4G.';
   else if(!ok.soma && ok.rp) verdict='👉 SomaFM refuse ton appareil/réseau, mais Radio Paradise marche : Cocon bascule dessus tout seul.';
-  else if(ok.soma && !ok.somaRef) verdict='👉 SomaFM refusait les radios lancées depuis un site : corrigé (Cocon ne donne plus l’adresse du site).';
   else verdict='👉 Les radios répondent : relance une station, elle devrait marcher. Sinon vérifie le volume et le mode silencieux.';
-  if($('rdiagRes')) $('rdiagRes').innerHTML=out.join('<br>')+'<br><br>'+verdict+'<br><i>Envoie-moi une capture de TOUT l’encadré (y compris le haut : Appareil, Adresse).</i>';
+  if($('rdiagRes')) $('rdiagRes').innerHTML=out.join('<br>')+'<br><br>'+verdict;
   btn.disabled=false; btn.textContent='🔧 Relancer le diagnostic'; }
 document.querySelectorAll('.amb[data-radio]').forEach(b=>b.onclick=()=>toggleRadio(b.dataset.radio,b));
 if($('radioDiagBtn')) $('radioDiagBtn').onclick=radioDiag;
