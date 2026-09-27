@@ -1151,7 +1151,7 @@ const Store = {
 };
 
 /* ===================== STATE ===================== */
-const DEF={ roomName:'', tom:0, dur:{focus:25,short:5,long:15}, longEvery:4, auto:false, chime:true, chimeVol:80, notif:false,
+const DEF={ roomName:'', tom:0, dur:{focus:25,short:5,long:15}, longEvery:4, cycle:0, auto:false, chime:true, chimeVol:80, notif:false,
   ambVol:50, ytVol:70, radioVol:60, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, goalMin:120, vidBg:'', mini:false, miniXY:null, studyLog:{}, myClasses:[], profLevel:null, profCode:'' };
 let S=JSON.parse(JSON.stringify(DEF));
 let mode='focus', running=false, remaining=1500, total=1500, ticker=null, focusDone=0;
@@ -1220,7 +1220,7 @@ function heartbeatPomo(now){ if(typeof classCreator!=='undefined' && classCreato
 function broadcastPomo(){ if(!(typeof classCreator!=='undefined' && classCreator && typeof inClass!=='undefined' && inClass && classCh)) return; lastBcast=Date.now(); var p; if(pKind==='chrono'){ p={pKind:'chrono',running:running,elapsed:elapsed}; } else { p={pKind:'pomo',running:running,mode:mode,total:total,remaining:remaining}; } try{ classCh.send({type:'broadcast',event:'pomo',payload:p}); }catch(e){} }
 function onPomoSync(p){ if(!p || (typeof classCreator!=='undefined' && classCreator)) return;
   if(p.pKind==='chrono'){ pKind='chrono'; if($('pLabel'))$('pLabel').textContent='CHRONO'; if(p.running){ running=true; chronoStart=Date.now()-(p.elapsed||0)*1000; lastTs=Date.now(); setPlayIcon(true); armTick(); } else { running=false; elapsed=p.elapsed||0; setPlayIcon(false); clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null; render(); } return; }
-  if(pKind==='pomo' && running && p.mode && p.mode!==mode && !window._folNotified){ const left=endAt?Math.round((endAt-Date.now())/1000):remaining; if(left<=15){ window._folNotified=true; notifyCycle(mode); } }
+  if(pKind==='pomo' && running && p.mode && p.mode!==mode && !window._folNotified){ const left=endAt?Math.round((endAt-Date.now())/1000):remaining; if(left<=15){ window._folNotified=true; followerEnded(mode); } }
   if(p.running && (p.remaining||0)>5) window._folNotified=false;
   pKind='pomo'; setMode(p.mode||'focus',false); total=p.total||(S.dur[mode]*60);
   if(p.running){ running=true; endAt=Date.now()+(p.remaining||0)*1000; lastTs=Date.now(); setPlayIcon(true); armTick(); }
@@ -1246,7 +1246,7 @@ function tick(){
   if(pKind==='chrono'){ elapsed=Math.max(0,Math.round((now-chronoStart)/1000)); accumFocusTime(now); render(); return; }
   remaining=Math.round((endAt-now)/1000);
   if(mode==='focus') accumFocusTime(now); else lastTs=now;
-  if(remaining<=0){ remaining=0; render(); if(classFollower){ clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null; if(!window._folNotified){ window._folNotified=true; notifyCycle(mode); } } else { pComplete(); } return; }
+  if(remaining<=0){ remaining=0; render(); if(classFollower){ clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null; if(!window._folNotified){ window._folNotified=true; followerEnded(mode); } } else { pComplete(); } return; }
   render();
 }
 function pStart(){ if(running)return; running=true; setPlayIcon(true); unlockAlarm(); stopAlarm(); lastTs=Date.now();
@@ -1261,24 +1261,38 @@ function pPause(){ running=false; setPlayIcon(false); clearInterval(ticker); tic
 }
 function pToggle(){ running?pPause():pStart(); }
 function pReset(){ stopAlarm(); pPause(); if(pKind==='chrono'){ elapsed=0; studySecAccum=0; chronoStart=Date.now(); } else { total=S.dur[mode]*60; remaining=total; } lastTs=0; render(); broadcastPomo(); }
-function notifyCycle(ended){
+function notifyCycle(ended,next){
   const isFocus=(ended==='focus');
   const kind=isFocus?'focusEnd':(ended==='long'?'longBreak':'breakEnd');
-  const title=isFocus?'\ud83c\udf45 Session termin\u00e9e':'\u2615 Pause termin\u00e9e';
-  const body=isFocus?'Place \u00e0 la pause, respire \ud83c\udf3f':'On repart pour une session \ud83d\udcaa';
+  const title=isFocus?'\ud83c\udf45 Session termin\u00e9e':(ended==='long'?'\ud83c\udf19 Grande pause termin\u00e9e':'\u2615 Pause termin\u00e9e');
+  const body=!isFocus?'On repart pour une session \ud83d\udcaa'
+    :(next==='long'?'Grande pause de '+S.dur.long+' min, tu l\u2019as m\u00e9rit\u00e9e \ud83c\udf19'
+    :(next==='short'?'Petite pause de '+S.dur.short+' min, respire \ud83c\udf3f':'Place \u00e0 la pause, respire \ud83c\udf3f'));
   if(S.chime) playAlarm(kind);
   if(navigator.vibrate){ try{ navigator.vibrate([300,120,300,120,500]); }catch(e){} }
   if(S.notif) showSysNotif(title,body);
   blinkTitle(title);
 }
+/* Compteur de sessions du cycle (S.cycle) : sauvegardé, donc il survit si l'app se recharge.
+   Une session de travail compte si elle est finie, ou passée après au moins la moitié.
+   La grande pause arrive dès que le compteur atteint "toutes les X sessions",
+   et le compteur repart à 0 seulement quand une grande pause se termine. */
+function followerEnded(m){ if(m==='focus') countFocus(true); else if(m==='long'){ S.cycle=0; save(); } notifyCycle(m); }
+function countFocus(done){ if(!done) return; S.cycle=(+S.cycle||0)+1; S.tom++; focusDone++; $('tomCount').textContent=S.tom; save(); }
+function nextBreak(){ return ((+S.cycle||0) >= (+S.longEvery||4)) ? 'long' : 'short'; }
 function pComplete(skipped){
+  const left=(running&&endAt)?Math.max(0,Math.round((endAt-Date.now())/1000)):remaining;
   clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null;
-  const ended=mode;
-  if(skipped!==true) notifyCycle(ended);
-  if(ended==='focus'){ focusDone++; S.tom++; $('tomCount').textContent=S.tom; save();
-    const nx=(focusDone%S.longEvery===0)?'long':'short';
+  const ended=mode, isSkip=(skipped===true);
+  if(ended==='focus'){
+    countFocus(!isSkip || (total>0 && (total-left) >= total/2));
+    const nx=nextBreak();
+    if(!isSkip) notifyCycle(ended,nx);
     flash(nx==='long'?'Bravo \ud83c\udf45 grande pause':'Bien jou\u00e9 \ud83c\udf45 petite pause'); setMode(nx);
-  } else { flash('Pause finie, on repart \ud83d\udcaa'); setMode('focus'); }
+  } else {
+    if(ended==='long'){ S.cycle=0; save(); }
+    if(!isSkip) notifyCycle(ended,'focus');
+    flash('Pause finie, on repart \ud83d\udcaa'); setMode('focus'); }
   if(S.auto){ running=true; setPlayIcon(true); lastTs=Date.now(); endAt=Date.now()+remaining*1000; armTick(); }
   else { running=false; setPlayIcon(false); }
   broadcastPomo();
@@ -1716,8 +1730,8 @@ function miniSync(){ const el=$('miniTimer'); if(!el||!el.classList.contains('on
   const tm=$('mtTom');
   if(tm){ const chrono=(typeof pKind!=='undefined'&&pKind==='chrono');
     tm.style.display=chrono?'none':'';
-    if(!chrono){ const n=+S.tom||0, every=+S.longEvery||4;
-      tm.textContent='🍅 '+n+' \u00b7 '+((n%every)+1)+'/'+every; } }
+    if(!chrono){ const n=+S.tom||0, every=+S.longEvery||4, c=+S.cycle||0;
+      tm.textContent='🍅 '+n+' \u00b7 '+Math.min(c+(mode==='focus'?1:0),every)+'/'+every; } }
   if($('mtPlayI')) $('mtPlayI').innerHTML=(typeof running!=='undefined'&&running)
     ? '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>' : '<path d="M8 5v14l11-7z"/>'; }
 function miniApply(){ const el=$('miniTimer'); if(!el)return;
@@ -2307,7 +2321,7 @@ $('longEvery').oninput=e=>{$('leVal').textContent=e.target.value;S.longEvery=+e.
 $('clearRoom').onclick=async ()=>{ if(!confirm('Vider la salle ? Tâches, chat, réglages et fonds seront effacés.'))return;
   if(idbOK){ for(const w of (S.wallpapers||[])){ if(w.type==='img'){ try{await IDB.del(w.id);}catch(e){} } } } wpData={};
   S=JSON.parse(JSON.stringify(DEF)); save(); applyActiveBg(); renderWallpapers(); hideSpot(); document.body.dataset.yt='off'; if(ytPlayer&&ytReady)try{ytPlayer.stopVideo();}catch(e){}
-  $('roomName').value=''; $('tomCount').textContent='0'; focusDone=0; $('nowIco').textContent='🎧'; if($('nowIco'))$('nowIco').classList.remove('playable'); $('mediaInput').value=''; if($('ytVolBtn'))$('ytVolBtn').style.display='none'; if($('ytVolPop'))$('ytVolPop').style.display='none'; if(typeof ytPlayer!=='undefined'&&ytPlayer&&ytReady)try{ytPlayer.stopVideo();}catch(e){} document.body.dataset.yt='off';
+  $('roomName').value=''; $('tomCount').textContent='0'; focusDone=0; S.cycle=0; $('nowIco').textContent='🎧'; if($('nowIco'))$('nowIco').classList.remove('playable'); $('mediaInput').value=''; if($('ytVolBtn'))$('ytVolBtn').style.display='none'; if($('ytVolPop'))$('ytVolPop').style.display='none'; if(typeof ytPlayer!=='undefined'&&ytPlayer&&ytReady)try{ytPlayer.stopVideo();}catch(e){} document.body.dataset.yt='off';
   $('dF').value=25;$('dS').value=5;$('dL').value=15; $('bgUrl').value='';
   $('swAuto').classList.remove('on');$('swChime').classList.add('on');$('chimeVol').value=80;$('cvVal').textContent='80';$('longEvery').value=4;$('leVal').textContent='4';
   document.querySelectorAll('.amb.on').forEach(b=>b.classList.remove('on'));
