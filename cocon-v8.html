@@ -1568,9 +1568,19 @@ function playAlarm(kind){ stopAlarm(); const vol=(S.chimeVol!=null?S.chimeVol:80
     try{ alarmEl.src=alarmWav(kind); alarmEl.muted=false; alarmEl.volume=vol; const pr=alarmEl.play(); if(pr&&pr.catch) pr.catch(()=>{}); }catch(e){} } }
 
 /* ---- vraie notification système (passe par le service worker sw.js) ---- */
+/* Nom unique « cocon-sw.js » : évite de réutiliser par erreur le sw.js d'une autre appli du site.
+   Ce service worker n'intercepte AUCUNE requête (radios, vidéos... passent directement). */
 let swReg=null;
+const COCON_SW='cocon-sw.js';
+function isCoconSW(u){ return !!u && u.split('?')[0].split('/').pop()===COCON_SW; }
 if('serviceWorker' in navigator && window.isSecureContext){
-  navigator.serviceWorker.register('sw.js').then(r=>{ swReg=r; }).catch(()=>{}); }
+  navigator.serviceWorker.register(COCON_SW,{scope:'./'}).then(r=>{ swReg=r; }).catch(()=>{}); }
+/* Retire un autre service worker qui contrôlerait Cocon (il peut bloquer les radios), puis recharge */
+async function repairSW(){ if(!navigator.serviceWorker) return;
+  try{ const regs=await navigator.serviceWorker.getRegistrations(); const here=location.href;
+    for(const r of regs){ const w=r.active||r.waiting||r.installing; const u=w?w.scriptURL:'';
+      if(here.indexOf(r.scope)===0 && !isCoconSW(u)) await r.unregister(); } }catch(e){}
+  flash('Réparé 🧹 rechargement…'); setTimeout(()=>location.reload(),700); }
 let _notifIcon=null;
 function notifIcon(){ if(_notifIcon) return _notifIcon;
   try{ const cv=document.createElement('canvas'); cv.width=cv.height=192; const g=cv.getContext('2d');
@@ -1656,9 +1666,12 @@ async function radioDiag(){ const box=$('radioDiag'), btn=$('radioDiagBtn'); if(
   const app=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone?'app installée':'navigateur';
   const head='<b>Appareil</b> : '+dev+' · '+nav+' · '+app+'<br><b>Adresse</b> : '+(location.hostname||location.protocol)+(inPreview()?' ⚠️ aperçu/iframe':'')
     +'<br><b>En ligne</b> : '+(navigator.onLine?'oui':'NON')+' · <b>Volume radio</b> : '+(S.radioVol!=null?S.radioVol:60)+' %'
-    +'<br><b>Service worker</b> : '+((navigator.serviceWorker&&navigator.serviceWorker.controller)?'actif':'aucun')
+    +(function(){ const c=navigator.serviceWorker&&navigator.serviceWorker.controller; if(!c) return '<br><b>Service worker</b> : aucun';
+        const n=c.scriptURL.split('?')[0].split('/').pop();
+        return isCoconSW(c.scriptURL) ? '<br><b>Service worker</b> : '+n+' ✅'
+          : '<br><b>Service worker</b> : ⚠️ '+n+' (pas celui de Cocon, il peut bloquer les radios) <button class="cyc-reset" id="swRepair" type="button">🧹 Réparer</button>'; })()
     +(radioLog.length?'<br><b>Dernier essai</b> :<br>'+radioLog.join('<br>'):'');
-  box.innerHTML=head+'<br><b>Tests</b> :<br><span id="rdiagRes">…</span>';
+  box.innerHTML=head+'<br><b>Tests</b> :<br><span id="rdiagRes">…</span>'; if($('swRepair')) $('swRepair').onclick=repairSW;
   const T=[
     {g:'soma', lab:'SomaFM Lofi', u:RADIO.fluid[0], ref:'no-referrer'},
     {g:'soma', lab:'SomaFM Chill', u:RADIO.groovesalad[0], ref:'no-referrer'},
@@ -1672,7 +1685,9 @@ async function radioDiag(){ const box=$('radioDiag'), btn=$('radioDiagBtn'); if(
     if($('rdiagRes')) $('rdiagRes').innerHTML=out.join('<br>')+'<br>…'; }
   setReferrer('strict-origin-when-cross-origin');
   let verdict;
-  if(!ok.soma && !ok.somaRef && !ok.rp) verdict = inPreview() ? '👉 TOUT est bloqué car Cocon tourne dans un aperçu (ex. Claude) qui interdit les sites extérieurs. Ouvre Cocon depuis ton site.'
+  const foreignSW=!!(navigator.serviceWorker&&navigator.serviceWorker.controller&&!isCoconSW(navigator.serviceWorker.controller.scriptURL));
+  if(!ok.soma && !ok.somaRef && !ok.rp && foreignSW) verdict='👉 Un ancien service worker bloque les radios : appuie sur « 🧹 Réparer » en haut de cet encadré.';
+  else if(!ok.soma && !ok.somaRef && !ok.rp) verdict = inPreview() ? '👉 TOUT est bloqué car Cocon tourne dans un aperçu (ex. Claude) qui interdit les sites extérieurs. Ouvre Cocon depuis ton site.'
       : !navigator.onLine ? '👉 Pas de connexion internet.'
       : '👉 TOUT est bloqué, même un autre diffuseur : c’est ton réseau ou ton navigateur (Wi-Fi de la fac, bloqueur de pub, VPN, économiseur de données). Essaie en 4G.';
   else if(!ok.soma && ok.rp) verdict='👉 SomaFM refuse ton appareil/réseau, mais Radio Paradise marche : Cocon bascule dessus tout seul.';
