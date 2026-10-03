@@ -1293,7 +1293,7 @@ function pStart(){ if(running)return; if(pKind!=='chrono' && !classFollower){ da
   else { if(remaining<=0){ total=S.dur[mode]*60; remaining=total; } endAt=Date.now()+remaining*1000; }
   armTick(); broadcastPomo();
 }
-function pPause(){ running=false; setPlayIcon(false); clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null;
+function pPause(){ if(running && pKind!=='chrono' && !classFollower){ touchCycle(); save(); } running=false; setPlayIcon(false); clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null;
   if(pKind==='chrono'){ elapsed=Math.max(0,Math.round((Date.now()-chronoStart)/1000)); }
   else if(endAt){ remaining=Math.max(0,Math.round((endAt-Date.now())/1000)); }
   render(); broadcastPomo();
@@ -1330,21 +1330,25 @@ function renderCycle(){ const box=$('pCycle'); if(!box) return;
 function resetCycle(msg){ stopAlarm(); if(running) pPause(); S.cycle=0; touchCycle(); save();
   setMode('focus'); broadcastPomo(); if(msg) flash(msg); }
 function checkIdleCycle(){ const c=+S.cycle||0, ts=+S.cycleTs||0;
-  if(c>0 && ts && (Date.now()-ts)>CYCLE_IDLE_MS){ S.cycle=0; save(); renderCycle(); flash('Nouveau cycle \ud83c\udf31 (tu \u00e9tais absent plus d\u20191 h)'); return true; }
-  return false; }
+  if(!ts || (Date.now()-ts)<=CYCLE_IDLE_MS) return false;
+  let did=false;
+  if(c>0){ S.cycle=0; did=true; }
+  /* minuteur en pause depuis plus d'1 h -> je le remets à une session focus complète */
+  if(!running && pKind!=='chrono' && !classFollower && (mode!=='focus' || remaining!==S.dur.focus*60)){ setMode('focus'); did=true; }
+  if(did){ touchCycle(); save(); renderCycle(); flash('Nouveau cycle \ud83c\udf31 (tu \u00e9tais absent plus d\u20191 h)'); }
+  return did; }
 function followerEnded(m){ if(m==='focus') countFocus(true); else { touchCycle(); if(m==='long') S.cycle=0; save(); } notifyCycle(m); }
 function countFocus(done){ touchCycle(); if(!done){ save(); return; } dayRollover(); S.cycle=(+S.cycle||0)+1; S.tom++; S.tomDay=(+S.tomDay||0)+1; focusDone++; $('tomCount').textContent=S.tomDay; save(); }
-/* ---- nouveau jour : tomates du jour, cycle et minuteur repartent à 0 ----
-   S.tom garde le total de toujours (compte, classement) ; S.tomDay = tomates d'aujourd'hui. */
+/* ---- 🍅 du jour : remises à 0 à minuit (date du calendrier, peu importe la dernière connexion) ----
+   S.tom garde le total de toujours (compte, classement) ; S.tomDay = tomates d'aujourd'hui ; S.dayKey = leur date.
+   Une session à cheval sur minuit compte pour le jour où elle se termine (countFocus appelle dayRollover avant +1). */
 function dayRollover(){ const k=todayKey();
   if(S.dayKey===k) return false;
   const first=!S.dayKey;
-  S.dayKey=k; S.tomDay=0; S.cycle=0; touchCycle(); save();
+  S.dayKey=k; S.tomDay=0; save();
   if($('tomCount')) $('tomCount').textContent='0';
-  /* on ne coupe jamais une session en cours, ni un minuteur piloté par une classe */
-  if(!running && !classFollower && pKind!=='chrono'){ total=S.dur.focus*60; remaining=total; setMode('focus'); }
-  else render();
-  if(!first) flash('Nouveau jour \ud83c\udf05 compteur et cycle remis \u00e0 0');
+  if(typeof miniSync==='function') miniSync();
+  if(!first) flash('Nouveau jour \ud83c\udf05 compteur de \ud83c\udf45 remis \u00e0 0');
   return true; }
 function nextBreak(){ return ((+S.cycle||0) >= (+S.longEvery||4)) ? 'long' : 'short'; }
 function pComplete(skipped){
@@ -1365,8 +1369,8 @@ function pComplete(skipped){
   broadcastPomo();
 }
 $('pPlay').onclick=pToggle; $('pReset').onclick=pReset; $('pSkip').onclick=()=>{ stopAlarm(); pComplete(true); };
-document.addEventListener('visibilitychange',function(){ if(!document.hidden){ dayRollover(); if(running) tick(); } });
-setInterval(function(){ try{ dayRollover(); }catch(e){} },60000);
+document.addEventListener('visibilitychange',function(){ if(!document.hidden){ dayRollover(); if(running) tick(); else if(pKind!=='chrono' && !classFollower) checkIdleCycle(); } });
+setInterval(function(){ try{ dayRollover(); }catch(e){} },30000);
 document.querySelectorAll('.pomo-modes button').forEach(b=>b.onclick=()=>{ if(running)pPause(); setMode(b.dataset.m); });
 ['dF','dS','dL'].forEach((id,i)=>{ const key=['focus','short','long'][i];
   $(id).onchange=()=>{ let v=parseInt($(id).value)||DEF.dur[key]; v=Math.max(1,Math.min(120,v)); $(id).value=v; S.dur[key]=v; save(); if(!running&&mode===key)pReset(); }; });
@@ -2695,9 +2699,8 @@ function mergeHistory(loc){ if(!loc)return; let ch=false;
   S.studyLog=S.studyLog||{};
   if(loc.studyLog){ for(const k in loc.studyLog){ const a=+S.studyLog[k]||0, b=+loc.studyLog[k]||0; if(b>a){ S.studyLog[k]=b; ch=true; } } }
   if(typeof loc.tom==='number' && loc.tom>(+S.tom||0)){ S.tom=loc.tom; ch=true; }
-  if(loc.dayKey && loc.dayKey===todayKey()){
-    if(S.dayKey!==loc.dayKey){ S.dayKey=loc.dayKey; S.tomDay=+loc.tomDay||0; S.cycle=+loc.cycle||0; ch=true; }
-    else if((+loc.tomDay||0)>(+S.tomDay||0)){ S.tomDay=+loc.tomDay; ch=true; } }
+  if(loc.dayKey){ if(loc.dayKey>(S.dayKey||'')){ S.dayKey=loc.dayKey; S.tomDay=+loc.tomDay||0; ch=true; }
+    else if(loc.dayKey===S.dayKey && (+loc.tomDay||0)>(+S.tomDay||0)){ S.tomDay=+loc.tomDay; ch=true; } }
   if(Array.isArray(loc.tasks) && !(Array.isArray(S.tasks)&&S.tasks.length) && loc.tasks.length){ S.tasks=loc.tasks; ch=true; }
   return ch; }
 async function startCloud(){ cloudMode=true; activeId=null; KEY='cocon:cloudcache:'+(cloudUser?cloudUser.id:'x');
