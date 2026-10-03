@@ -211,6 +211,9 @@
   .add-row input:focus{border-color:var(--accent);}
   .add-row button{width:42px;border:none;border-radius:11px;background:var(--peach);color:#1a1226;font-size:20px;}
   .tlist{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px;}
+  .tsec{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:6px 2px 0;}
+  .tsec:first-child{margin-top:0;}
+  .tsec b{font-size:10.5px;color:var(--peach);background:rgba(240,168,120,.12);border-radius:7px;padding:2px 7px;letter-spacing:0;}
   .tlist::-webkit-scrollbar{width:5px;}.tlist::-webkit-scrollbar-thumb{background:rgba(243,233,218,.2);border-radius:5px;}
   .task{display:flex;align-items:center;gap:10px;padding:11px;border-radius:12px;background:rgba(243,233,218,.05);border:1px solid var(--line);}
   .task .ck{width:21px;height:21px;flex:none;border-radius:6px;border:2px solid var(--muted);display:grid;place-items:center;transition:.2s;}
@@ -1347,6 +1350,7 @@ function dayRollover(){ const k=todayKey();
   const first=!S.dayKey;
   S.dayKey=k; S.tomDay=0; save();
   if($('tomCount')) $('tomCount').textContent='0';
+  if(typeof purgeDoneTasks==='function'){ purgeDoneTasks(); if(typeof renderTasks==='function') renderTasks(); }
   if(typeof miniSync==='function') miniSync();
   if(!first) flash('Nouveau jour \ud83c\udf05 compteur de \ud83c\udf45 remis \u00e0 0');
   return true; }
@@ -1370,7 +1374,7 @@ function pComplete(skipped){
 }
 $('pPlay').onclick=pToggle; $('pReset').onclick=pReset; $('pSkip').onclick=()=>{ stopAlarm(); pComplete(true); };
 document.addEventListener('visibilitychange',function(){ if(!document.hidden){ dayRollover(); if(running) tick(); else if(pKind!=='chrono' && !classFollower) checkIdleCycle(); } });
-setInterval(function(){ try{ dayRollover(); }catch(e){} },30000);
+setInterval(function(){ try{ dayRollover(); if(typeof miniTasksSync==='function') miniTasksSync(); }catch(e){} },30000);
 document.querySelectorAll('.pomo-modes button').forEach(b=>b.onclick=()=>{ if(running)pPause(); setMode(b.dataset.m); });
 ['dF','dS','dL'].forEach((id,i)=>{ const key=['focus','short','long'][i];
   $(id).onchange=()=>{ let v=parseInt($(id).value)||DEF.dur[key]; v=Math.max(1,Math.min(120,v)); $(id).value=v; S.dur[key]=v; save(); if(!running&&mode===key)pReset(); }; });
@@ -1879,11 +1883,14 @@ function miniTasksSync(){ const el=$('miniTasks'); if(!el||!el.classList.contain
   const done=tasks.filter(t=>t.done).length;
   $('mkCount').textContent=done+'/'+tasks.length;
   if(!tasks.length){ list.innerHTML='<div class="mk-empty">Aucune tâche 🌙</div>'; return; }
+  const now=Date.now();
+  const shown=tasks.filter(t=>!t.done || (now-(+t.doneAt||0))<MINI_HIDE_MS);   /* faite depuis moins de 5 s -> encore visible */
+  if(!shown.length){ list.innerHTML='<div class="mk-empty">Tout est fait \u2728</div>'; return; }
   list.innerHTML='';
-  tasks.forEach(t=>{ const b=document.createElement('button'); b.type='button'; b.className='mk-item'+(t.done?' done':'');
+  shown.forEach(t=>{ const b=document.createElement('button'); b.type='button'; b.className='mk-item'+(t.done?' done':'');
     b.innerHTML='<span class="mk-ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span class="mk-tx"></span>';
     b.querySelector('.mk-tx').textContent=t.text;
-    b.onclick=()=>{ t.done=!t.done; save(); renderTasks(); };
+    b.onclick=()=>toggleTask(t);
     list.appendChild(b); }); }
 function miniTasksApply(){ const el=$('miniTasks'); if(!el)return;
   el.classList.toggle('on',!!S.miniTasks);
@@ -1989,14 +1996,31 @@ document.querySelectorAll('.pip .bar').forEach(bar=>{
 });
 
 /* ===================== TASKS ===================== */
-function renderTasks(){ if(typeof miniTasksSync==='function') miniTasksSync(); const l=$('tlist'); if(!S.tasks.length){l.innerHTML='<div class="empty">Rien encore.<br>Ajoute une tâche 🌙</div>';return;} l.innerHTML='';
-  S.tasks.forEach((t,i)=>{ const el=document.createElement('div'); el.className='task'+(t.done?' done':'');
-    el.innerHTML=`<div class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><div class="tx"></div><button class="x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
-    el.querySelector('.tx').textContent=t.text;
-    el.querySelector('.ck').onclick=()=>{t.done=!t.done;save();renderTasks();};
-    el.querySelector('.x').onclick=()=>{S.tasks.splice(i,1);save();renderTasks();}; l.appendChild(el); }); }
+const MINI_HIDE_MS=90000;   /* une tâche cochée reste 1 min 30 dans la mini-liste (le temps de décocher en cas d'erreur) */
+function toggleTask(t){ t.done=!t.done; t.doneAt=t.done?Date.now():0; save(); renderTasks();
+  if(t.done) setTimeout(function(){ if(typeof miniTasksSync==='function') miniTasksSync(); }, MINI_HIDE_MS+100); }
+function taskRow(t){ const el=document.createElement('div'); el.className='task'+(t.done?' done':'');
+  el.innerHTML=`<div class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><div class="tx"></div><button class="x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
+  el.querySelector('.tx').textContent=t.text;
+  el.querySelector('.ck').onclick=()=>toggleTask(t);
+  el.querySelector('.x').onclick=()=>{ const i=S.tasks.indexOf(t); if(i>=0){ S.tasks.splice(i,1); save(); renderTasks(); } };
+  return el; }
+function taskSec(label,n){ const h=document.createElement('div'); h.className='tsec'; h.innerHTML='<span></span><b></b>';
+  h.querySelector('span').textContent=label; h.querySelector('b').textContent=n; return h; }
+function renderTasks(){ if(typeof miniTasksSync==='function') miniTasksSync();
+  const l=$('tlist'); if(!S.tasks.length){l.innerHTML='<div class="empty">Rien encore.<br>Ajoute une tâche 🌙</div>';return;} l.innerHTML='';
+  const todo=S.tasks.filter(t=>!t.done), done=S.tasks.filter(t=>t.done);
+  if(!done.length){ todo.forEach(t=>l.appendChild(taskRow(t))); return; }   /* aucune tâche faite -> affichage simple */
+  l.appendChild(taskSec('\u00c0 faire',todo.length));
+  if(todo.length) todo.forEach(t=>l.appendChild(taskRow(t)));
+  else { const e=document.createElement('div'); e.className='empty'; e.textContent='Tout est fait \u2728'; l.appendChild(e); }
+  done.sort((a,b)=>(+a.doneAt||0)-(+b.doneAt||0));
+  l.appendChild(taskSec('Accomplies aujourd\u2019hui',done.length));
+  done.forEach(t=>l.appendChild(taskRow(t))); }
 function addTask(){ const v=$('taskIn').value.trim(); if(!v)return; S.tasks.push({text:v,done:false}); $('taskIn').value=''; save(); renderTasks(); }
-function purgeDoneTasks(){ if(Array.isArray(S.tasks)){ const before=S.tasks.length; S.tasks=S.tasks.filter(t=>!t.done); if(S.tasks.length!==before) save(); } }
+function purgeDoneTasks(){ if(Array.isArray(S.tasks)){ const before=S.tasks.length, k=todayKey();
+  S.tasks=S.tasks.filter(t=>!t.done || (t.doneAt && todayKey(new Date(t.doneAt))===k));
+  if(S.tasks.length!==before) save(); } }
 function clearChat(){ if(!Array.isArray(S.chat)) S.chat=[]; else if(S.chat.length){ S.chat=[]; save(); } }
 $('taskAdd').onclick=addTask; $('taskIn').onkeydown=e=>{if(e.key==='Enter')addTask();};
 
