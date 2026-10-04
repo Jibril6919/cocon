@@ -326,6 +326,16 @@
   .pk-tabs{display:flex;gap:6px;padding:4px;border-radius:999px;background:rgba(243,233,218,.06);border:1px solid var(--line);margin-bottom:9px;}
   .pk{flex:1;border:none;background:transparent;color:var(--muted);font-weight:600;font-size:13px;padding:6px;border-radius:999px;font-family:inherit;}
   .pk.on{background:var(--peach);color:#1a1226;}
+  /* ---- minuteur (compte à rebours) ---- */
+  .tm-cfg{display:none;margin-top:8px;}
+  .tm-chips{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .tm-chip{border:1px solid var(--line);background:rgba(243,233,218,.05);color:var(--cream);border-radius:10px;padding:7px 4px;font-family:inherit;font-weight:600;font-size:12.5px;}
+  .tm-chip.on{background:var(--peach);border-color:var(--peach);color:#1a1226;}
+  .tm-custom{display:flex;align-items:center;gap:8px;margin-top:7px;background:rgba(243,233,218,.05);border:1px solid var(--line);border-radius:11px;padding:6px 10px;}
+  .tm-custom small{flex:1;font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .tm-custom input{width:64px;background:transparent;border:none;outline:none;color:var(--cream);font-family:'Space Mono',monospace;font-weight:700;font-size:16px;text-align:right;}
+  .tm-custom span{font-size:12px;color:var(--muted);}
+  body[data-follow="1"] .tm-cfg{display:none!important;}
   /* ---- pastille micro ---- */
   .mic-pill{position:fixed;left:50%;transform:translateX(-50%);top:max(64px,calc(env(safe-area-inset-top) + 50px));z-index:26;display:none;align-items:center;gap:9px;background:var(--panel);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:999px;padding:7px 12px;}
   .mic-pill.show{display:flex;}
@@ -774,6 +784,7 @@
   <h3 id="pomoTitle">🍅 Pomodoro</h3>
   <div class="pk-tabs">
     <button id="pkPomo" class="pk on" type="button">Pomodoro</button>
+    <button id="pkTimer" class="pk" type="button">Minuteur</button>
     <button id="pkChrono" class="pk" type="button">Chrono</button>
   </div>
   <div class="pomo-modes" id="pomoModes">
@@ -797,10 +808,17 @@
     <div class="cfg"><small>Pause</small><input type="number" id="dS" min="1" max="60" value="5"/></div>
     <div class="cfg"><small>Longue</small><input type="number" id="dL" min="1" max="60" value="15"/></div>
   </div>
+  <div class="tm-cfg" id="timerCfg">
+    <div class="tm-chips" id="tmChips">
+      <button class="tm-chip" data-min="15" type="button">15 min</button><button class="tm-chip" data-min="30" type="button">30 min</button><button class="tm-chip" data-min="45" type="button">45 min</button>
+      <button class="tm-chip" data-min="60" type="button">1 h</button><button class="tm-chip" data-min="90" type="button">1 h 30</button><button class="tm-chip" data-min="120" type="button">2 h</button>
+    </div>
+    <div class="tm-custom"><small>Durée perso</small><input type="number" id="tmMin" min="1" max="600" value="60"/><span>min</span></div>
+  </div>
   <button class="mini-toggle" id="miniToggle" type="button">📌 Mini-chrono flottant</button>
   <div id="pomoFollowNote">⏱️ Minuteur synchronisé · piloté par l’hôte de la classe</div>
   <div class="pomo-opts" id="pomoOpts">
-    <div class="toggle-row"><span>Enchaîner les sessions</span><div class="sw" id="swAuto"></div></div>
+    <div class="toggle-row" id="optAuto"><span>Enchaîner les sessions</span><div class="sw" id="swAuto"></div></div>
     <div class="toggle-row"><span>Son de fin de session</span><div class="sw on" id="swChime"></div></div>
     <div class="toggle-row"><span>Notifications</span><div class="sw" id="swNotif"></div></div>
     <div class="le-row">
@@ -808,7 +826,7 @@
       <input type="range" id="chimeVol" min="0" max="100" value="80"/>
     </div>
     <button class="mini-toggle" id="testAlarm" type="button">🔔 Tester l'alarme et la notif</button>
-    <div class="le-row">
+    <div class="le-row" id="optLong">
       <div class="le-top"><span>Pause longue</span><span class="le-num">toutes les <b id="leVal">4</b> sessions</span></div>
       <input type="range" id="longEvery" min="2" max="8" value="4"/>
     </div>
@@ -1194,7 +1212,7 @@ const Store = {
 
 /* ===================== STATE ===================== */
 const DEF={ roomName:'', tom:0, dur:{focus:25,short:5,long:15}, longEvery:4, cycle:0, cycleTs:0, auto:false, chime:true, chimeVol:80, notif:false,
-  ambVol:50, ytVol:70, radioVol:60, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, goalMin:120, vidBg:'', mini:false, miniXY:null, miniTasks:false, miniTasksXY:null, dayKey:'', tomDay:0, studyLog:{}, myClasses:[], profLevel:null, profCode:'' };
+  ambVol:50, ytVol:70, radioVol:60, media:'', tasks:[], chat:[], wallpapers:[], bgActive:'', profName:'', profPhoto:'', profStatus:'', timerMin:10, goalMin:120, vidBg:'', mini:false, miniXY:null, revMin:60, miniTasks:false, miniTasksXY:null, dayKey:'', tomDay:0, studyLog:{}, myClasses:[], profLevel:null, profCode:'' };
 let S=JSON.parse(JSON.stringify(DEF));
 let mode='focus', running=false, remaining=1500, total=1500, ticker=null, focusDone=0;
 const PHASE={focus:'focus',short:'pause',long:'longue'};
@@ -1259,9 +1277,13 @@ function setMode(m,reset=true){
 function fmtLong(s){ const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), x=s%60; return (h>0?h+':'+String(m).padStart(2,'0'):String(m).padStart(2,'0'))+':'+String(x).padStart(2,'0'); }
 function setPlayIcon(on){ $('pPlayI').innerHTML=on?'<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>':'<path d="M8 5v14l11-7z"/>'; }
 function heartbeatPomo(now){ if(typeof classCreator!=='undefined' && classCreator && typeof inClass!=='undefined' && inClass && (now-lastBcast)>12000) broadcastPomo(); }
-function broadcastPomo(){ if(!(typeof classCreator!=='undefined' && classCreator && typeof inClass!=='undefined' && inClass && classCh)) return; lastBcast=Date.now(); var p; if(pKind==='chrono'){ p={pKind:'chrono',running:running,elapsed:elapsed}; } else { p={pKind:'pomo',running:running,mode:mode,total:total,remaining:remaining}; } try{ classCh.send({type:'broadcast',event:'pomo',payload:p}); }catch(e){} }
+function broadcastPomo(){ if(!(typeof classCreator!=='undefined' && classCreator && typeof inClass!=='undefined' && inClass && classCh)) return; lastBcast=Date.now(); var p; if(pKind==='chrono'){ p={pKind:'chrono',running:running,elapsed:elapsed}; } else if(pKind==='timer'){ p={pKind:'timer',running:running,total:total,remaining:(running&&endAt)?Math.max(0,Math.round((endAt-Date.now())/1000)):remaining}; } else { p={pKind:'pomo',running:running,mode:mode,total:total,remaining:remaining}; } try{ classCh.send({type:'broadcast',event:'pomo',payload:p}); }catch(e){} }
 function onPomoSync(p){ if(!p || (typeof classCreator!=='undefined' && classCreator)) return;
   if(p.pKind==='chrono'){ pKind='chrono'; if($('pLabel'))$('pLabel').textContent='CHRONO'; if(p.running){ running=true; chronoStart=Date.now()-(p.elapsed||0)*1000; lastTs=Date.now(); setPlayIcon(true); armTick(); } else { running=false; elapsed=p.elapsed||0; setPlayIcon(false); clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null; render(); } return; }
+  if(p.pKind==='timer'){ pKind='timer'; document.body.dataset.mode='focus'; if($('pLabel'))$('pLabel').textContent='minuteur'; total=p.total||total;
+    if(p.running){ running=true; endAt=Date.now()+(p.remaining||0)*1000; lastTs=Date.now(); setPlayIcon(true); armTick(); }
+    else { running=false; remaining=(p.remaining!=null?p.remaining:total); setPlayIcon(false); clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null; }
+    render(); return; }
   if(pKind==='pomo' && running && p.mode && p.mode!==mode && !window._folNotified){ const left=endAt?Math.round((endAt-Date.now())/1000):remaining; if(left<=15){ window._folNotified=true; followerEnded(mode); } }
   if(p.running && (p.remaining||0)>5) window._folNotified=false;
   pKind='pomo'; setMode(p.mode||'focus',false); total=p.total||(S.dur[mode]*60);
@@ -1273,6 +1295,7 @@ function logStudy(min){ if(!S.studyLog)S.studyLog={}; const k=todayKey(); S.stud
 function accumStudy(){ studySecAccum++; if(studySecAccum>=60){ studySecAccum-=60; logStudy(1); } }
 function render(){
   if(pKind==='chrono'){ $('pClock').textContent=fmtLong(elapsed); $('pRing').style.strokeDashoffset=RL*(1-((elapsed%60)/60)); if(!window._tBlink) document.title=(running?'▶ ':'')+fmtLong(elapsed)+' · Cocon'; }
+  else if(pKind==='timer'){ $('pClock').textContent=fmtLong(Math.max(0,remaining)); $('pRing').style.strokeDashoffset=RL*(1-(total>0?remaining/total:0)); if(!window._tBlink) document.title=(running?'▶ ':'')+fmtLong(Math.max(0,remaining))+' · Cocon'; }
   else { $('pClock').textContent=fmt(remaining); $('pRing').style.strokeDashoffset=RL*(1-(total>0?remaining/total:0)); if(!window._tBlink) document.title=(running?'▶ ':'')+fmt(remaining)+' · Cocon'; }
   mirrorWinTimer(); if(typeof miniSync==='function') miniSync(); if(typeof renderCycle==='function') renderCycle();
 }
@@ -1286,23 +1309,26 @@ function tick(){
   const now=Date.now();
   if(running) heartbeatPomo(now);
   if(pKind==='chrono'){ elapsed=Math.max(0,Math.round((now-chronoStart)/1000)); accumFocusTime(now); render(); return; }
+  if(pKind==='timer'){ remaining=Math.round((endAt-now)/1000); accumFocusTime(now);   /* le temps de révision compte dans le rapport */
+    if(remaining<=0){ remaining=0; timerComplete(); return; } render(); return; }
   remaining=Math.round((endAt-now)/1000);
   if(mode==='focus') accumFocusTime(now); else lastTs=now;
   if(remaining<=0){ remaining=0; render(); if(classFollower){ clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null; if(!window._folNotified){ window._folNotified=true; followerEnded(mode); } } else { pComplete(); } return; }
   render();
 }
-function pStart(){ if(running)return; if(pKind!=='chrono' && !classFollower){ dayRollover(); checkIdleCycle(); } touchCycle(); running=true; setPlayIcon(true); unlockAlarm(); stopAlarm(); lastTs=Date.now();
+function pStart(){ if(running)return; if(pKind==='pomo' && !classFollower){ dayRollover(); checkIdleCycle(); } if(pKind==='timer' && !classFollower) checkIdleTimer(); if(pKind==='pomo') touchCycle(); running=true; setPlayIcon(true); unlockAlarm(); stopAlarm(); lastTs=Date.now();
   if(pKind==='chrono'){ chronoStart=Date.now()-elapsed*1000; }
+  else if(pKind==='timer'){ if(remaining<=0){ total=(+S.revMin||60)*60; remaining=total; } endAt=Date.now()+remaining*1000; render(); }
   else { if(remaining<=0){ total=S.dur[mode]*60; remaining=total; } endAt=Date.now()+remaining*1000; }
   armTick(); broadcastPomo();
 }
-function pPause(){ if(running && pKind!=='chrono' && !classFollower){ touchCycle(); save(); } running=false; setPlayIcon(false); clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null;
+function pPause(){ if(running && pKind==='pomo' && !classFollower){ touchCycle(); save(); } if(running && pKind==='timer') timerIdleTs=Date.now(); running=false; setPlayIcon(false); clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null;
   if(pKind==='chrono'){ elapsed=Math.max(0,Math.round((Date.now()-chronoStart)/1000)); }
   else if(endAt){ remaining=Math.max(0,Math.round((endAt-Date.now())/1000)); }
   render(); broadcastPomo();
 }
 function pToggle(){ running?pPause():pStart(); }
-function pReset(){ stopAlarm(); pPause(); if(pKind==='chrono'){ elapsed=0; studySecAccum=0; chronoStart=Date.now(); } else { total=S.dur[mode]*60; remaining=total; } lastTs=0; render(); broadcastPomo(); }
+function pReset(){ stopAlarm(); pPause(); if(pKind==='chrono'){ elapsed=0; studySecAccum=0; chronoStart=Date.now(); } else if(pKind==='timer'){ total=(+S.revMin||60)*60; remaining=total; } else { total=S.dur[mode]*60; remaining=total; } lastTs=0; render(); broadcastPomo(); }
 function notifyCycle(ended,next){
   const isFocus=(ended==='focus');
   const kind=isFocus?'focusEnd':(ended==='long'?'longBreak':'breakEnd');
@@ -1337,7 +1363,7 @@ function checkIdleCycle(){ const c=+S.cycle||0, ts=+S.cycleTs||0;
   let did=false;
   if(c>0){ S.cycle=0; did=true; }
   /* minuteur en pause depuis plus d'1 h -> je le remets à une session focus complète */
-  if(!running && pKind!=='chrono' && !classFollower && (mode!=='focus' || remaining!==S.dur.focus*60)){ setMode('focus'); did=true; }
+  if(!running && pKind==='pomo' && !classFollower && (mode!=='focus' || remaining!==S.dur.focus*60)){ setMode('focus'); did=true; }
   if(did){ touchCycle(); save(); renderCycle(); flash('Nouveau cycle \ud83c\udf31 (tu \u00e9tais absent plus d\u20191 h)'); }
   return did; }
 function followerEnded(m){ if(m==='focus') countFocus(true); else { touchCycle(); if(m==='long') S.cycle=0; save(); } notifyCycle(m); }
@@ -1354,6 +1380,33 @@ function dayRollover(){ const k=todayKey();
   if(typeof miniSync==='function') miniSync();
   if(!first) flash('Nouveau jour \ud83c\udf05 compteur de \ud83c\udf45 remis \u00e0 0');
   return true; }
+/* ---- minuteur : même règle d'1 h que le Pomodoro ----
+   En pause (ou fini) depuis plus d'1 h -> je le remets à la durée choisie. */
+let timerIdleTs=0;
+function checkIdleTimer(){ if(pKind!=='timer' || running || !timerIdleTs) return false;
+  if((Date.now()-timerIdleTs)<=CYCLE_IDLE_MS) return false;
+  timerIdleTs=0; const full=(+S.revMin||60)*60;
+  if(total===full && remaining===full) return false;
+  total=full; remaining=full; render(); broadcastPomo();
+  flash('Minuteur remis \u00e0 '+fmtRev(+S.revMin||60)+' \ud83c\udf31 (en pause plus d\u20191 h)');
+  return true; }
+/* ---- minuteur : fin du compte à rebours ---- */
+function timerComplete(){ clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null;
+  running=false; remaining=0; timerIdleTs=Date.now(); setPlayIcon(false); render();
+  const m=Math.round(total/60), d=(m>=60)?(Math.floor(m/60)+' h'+(m%60?' '+String(m%60).padStart(2,'0'):'')):(m+' min');
+  const title='\u23f3 R\u00e9vision termin\u00e9e', body='Tes '+d+' sont faites, bravo \ud83d\udcaa';
+  if(S.chime) playAlarm('focusEnd');
+  if(navigator.vibrate){ try{ navigator.vibrate([300,120,300,120,500]); }catch(e){} }
+  if(S.notif) showSysNotif(title,body);
+  blinkTitle(title); flash(title+' \u2014 '+body);
+  if(!classFollower) broadcastPomo(); }
+function fmtRev(m){ return m>=60 ? (Math.floor(m/60)+' h'+(m%60?' '+String(m%60).padStart(2,'0'):'')) : (m+' min'); }
+function setRevMin(v){ v=Math.max(1,Math.min(600,parseInt(v)||60)); S.revMin=v; save();
+  if($('tmMin')) $('tmMin').value=v;
+  document.querySelectorAll('#tmChips .tm-chip').forEach(b=>b.classList.toggle('on',+b.dataset.min===v));
+  if(pKind==='timer'){
+    if(running) flash('Nouvelle dur\u00e9e : '+fmtRev(v)+' (appliqu\u00e9e au prochain \u21ba)');
+    else { total=v*60; remaining=total; render(); broadcastPomo(); } } }
 function nextBreak(){ return ((+S.cycle||0) >= (+S.longEvery||4)) ? 'long' : 'short'; }
 function pComplete(skipped){
   const left=(running&&endAt)?Math.max(0,Math.round((endAt-Date.now())/1000)):remaining;
@@ -1373,7 +1426,7 @@ function pComplete(skipped){
   broadcastPomo();
 }
 $('pPlay').onclick=pToggle; $('pReset').onclick=pReset; $('pSkip').onclick=()=>{ stopAlarm(); pComplete(true); };
-document.addEventListener('visibilitychange',function(){ if(!document.hidden){ dayRollover(); if(running) tick(); else if(pKind!=='chrono' && !classFollower) checkIdleCycle(); } });
+document.addEventListener('visibilitychange',function(){ if(!document.hidden){ dayRollover(); if(running) tick(); else if(pKind==='pomo' && !classFollower) checkIdleCycle(); else if(pKind==='timer' && !classFollower) checkIdleTimer(); } });
 setInterval(function(){ try{ dayRollover(); if(typeof miniTasksSync==='function') miniTasksSync(); }catch(e){} },30000);
 document.querySelectorAll('.pomo-modes button').forEach(b=>b.onclick=()=>{ if(running)pPause(); setMode(b.dataset.m); });
 ['dF','dS','dL'].forEach((id,i)=>{ const key=['focus','short','long'][i];
@@ -1383,14 +1436,22 @@ document.querySelectorAll('.pomo-modes button').forEach(b=>b.onclick=()=>{ if(ru
 let durMine=null;
   let pKind='pomo', elapsed=0, studySecAccum=0, endAt=0, endTimer=null, lastTs=0, chronoStart=0;
   let classFollower=false, lastBcast=0;
-function setPKind(k){ pKind=k; pPause(); const isChrono=(k==='chrono');
-  $('pkPomo').classList.toggle('on',!isChrono); if($('pkChrono'))$('pkChrono').classList.toggle('on',isChrono);
-  $('pomoModes').style.display=isChrono?'none':''; if($('pCycle'))$('pCycle').style.display=isChrono?'none':'';
-  if($('pomoCfg'))$('pomoCfg').style.display=isChrono?'none':''; if($('pomoOpts'))$('pomoOpts').style.display=isChrono?'none':'';
-  if($('pSkip'))$('pSkip').style.display=isChrono?'none':'';
-  $('pomoTitle').textContent=isChrono?'⏱️ Chrono':'🍅 Pomodoro';
+function setPKind(k){ pKind=k; pPause(); const isChrono=(k==='chrono'), isTimer=(k==='timer'), isPomo=(k==='pomo');
+  $('pkPomo').classList.toggle('on',isPomo); if($('pkChrono'))$('pkChrono').classList.toggle('on',isChrono); if($('pkTimer'))$('pkTimer').classList.toggle('on',isTimer);
+  $('pomoModes').style.display=isPomo?'':'none'; if($('pCycle'))$('pCycle').style.display=isPomo?'':'none';
+  if($('pomoCfg'))$('pomoCfg').style.display=isPomo?'':'none';
+  if($('timerCfg'))$('timerCfg').style.display=isTimer?'block':'none';
+  /* le minuteur garde le son, les notifs et le volume ; pas "enchaîner" ni "pause longue" */
+  if($('pomoOpts'))$('pomoOpts').style.display=isChrono?'none':'';
+  if($('optAuto'))$('optAuto').style.display=isPomo?'':'none'; if($('optLong'))$('optLong').style.display=isPomo?'':'none';
+  if($('pSkip'))$('pSkip').style.display=isPomo?'':'none';
+  $('pomoTitle').textContent=isChrono?'⏱️ Chrono':(isTimer?'⏳ Minuteur':'🍅 Pomodoro');
   if(isChrono){ document.body.dataset.mode='focus'; $('pLabel').textContent='chrono'; elapsed=0; studySecAccum=0; render(); }
+  else if(isTimer){ document.body.dataset.mode='focus'; $('pLabel').textContent='minuteur'; stopAlarm(); setRevMin(S.revMin||60); total=(+S.revMin||60)*60; remaining=total; render(); }
   else { setMode(mode); } }
+if($('pkTimer')) $('pkTimer').onclick=()=>setPKind('timer');
+document.querySelectorAll('#tmChips .tm-chip').forEach(b=>{ b.onclick=()=>setRevMin(+b.dataset.min); });
+if($('tmMin')) $('tmMin').onchange=()=>setRevMin($('tmMin').value);
 if($('pkPomo')) $('pkPomo').onclick=()=>setPKind('pomo');
 $('cycReset').onclick=()=>resetCycle('Cycle remis \u00e0 z\u00e9ro \ud83c\udf31 (tes \ud83c\udf45 sont gard\u00e9es)');
 if($('pkChrono')) $('pkChrono').onclick=()=>setPKind('chrono');
@@ -1835,7 +1896,7 @@ function miniSync(){ const el=$('miniTimer'); if(!el||!el.classList.contains('on
   const t=$('pClock'); if(t&&$('mtTime')) $('mtTime').textContent=t.textContent;
   const lab=$('pLabel'); if(lab&&$('mtMode')) $('mtMode').textContent=lab.textContent;
   const tm=$('mtTom');
-  if(tm){ const chrono=(typeof pKind!=='undefined'&&pKind==='chrono');
+  if(tm){ const chrono=(typeof pKind!=='undefined'&&pKind!=='pomo');
     tm.style.display=chrono?'none':'';
     if(!chrono){ const n=+S.tomDay||0, every=+S.longEvery||4, c=+S.cycle||0;
       tm.textContent='🍅 '+n+' \u00b7 '+Math.min(c+(mode==='focus'?1:0),every)+'/'+every; } }
