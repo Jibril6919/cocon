@@ -175,6 +175,18 @@
   .le-num{font-size:12px;color:var(--muted);}
   .le-num b{color:var(--accent);font-weight:700;font-size:13.5px;}
   .le-row input[type=range]{width:100%;}
+  /* boutons − / + (volume) : un appui = 10 %, bloqué entre 0 et 100 */
+  .stepper{display:flex;align-items:center;gap:6px;}
+  .stp-btn{width:34px;height:34px;border-radius:50%;border:1px solid rgba(243,233,218,.18);background:rgba(243,233,218,.06);color:var(--text,#f3e9da);font-size:18px;line-height:1;cursor:pointer;display:grid;place-items:center;}
+  .stp-btn:hover:not(:disabled){background:rgba(243,233,218,.14);}
+  .stp-btn:disabled{opacity:.3;cursor:default;}
+  .stp-val{min-width:56px;text-align:center;font-size:13px;color:var(--muted);}
+  .stp-val b{color:var(--accent);font-size:15px;font-weight:700;}
+  /* pastilles (pause longue) : un appui = un choix, de 2 à 8 */
+  .chips{display:flex;gap:6px;}
+  .chips button{flex:1;min-width:0;height:36px;border-radius:10px;border:1px solid rgba(243,233,218,.16);background:rgba(243,233,218,.05);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;}
+  .chips button:hover{background:rgba(243,233,218,.12);}
+  .chips button.on{background:var(--peach);color:#1a1424;border-color:transparent;}
   #pomoFollowNote{display:none;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.5;margin-top:14px;padding:11px;background:rgba(243,233,218,.05);border:1px solid var(--line);border-radius:12px;}
   body[data-follow="1"] #pomoFollowNote{display:block;}
   body[data-follow="1"] .pk-tabs,body[data-follow="1"] .pomo-modes,body[data-follow="1"] .pomo-ctl,body[data-follow="1"] .pomo-cfg,body[data-follow="1"] .pomo-opts{display:none!important;}
@@ -822,13 +834,17 @@
     <div class="toggle-row"><span>Son de fin de session</span><div class="sw on" id="swChime"></div></div>
     <div class="toggle-row"><span>Notifications</span><div class="sw" id="swNotif"></div></div>
     <div class="le-row">
-      <div class="le-top"><span>Volume de l'alarme</span><span class="le-num"><b id="cvVal">80</b> %</span></div>
-      <input type="range" id="chimeVol" min="0" max="100" value="80"/>
+      <div class="le-top"><span>Volume de l'alarme</span>
+        <div class="stepper" role="group" aria-label="Volume de l'alarme">
+          <button type="button" class="stp-btn" id="cvMinus" aria-label="Baisser le volume">−</button>
+          <span class="stp-val"><b id="cvVal">80</b> %</span>
+          <button type="button" class="stp-btn" id="cvPlus" aria-label="Monter le volume">+</button>
+        </div></div>
     </div>
     <button class="mini-toggle" id="testAlarm" type="button">🔔 Tester l'alarme et la notif</button>
     <div class="le-row" id="optLong">
       <div class="le-top"><span>Pause longue</span><span class="le-num">toutes les <b id="leVal">4</b> sessions</span></div>
-      <input type="range" id="longEvery" min="2" max="8" value="4"/>
+      <div class="chips" id="leChips" role="radiogroup" aria-label="Pause longue toutes les X sessions"></div>
     </div>
   </div>
 </div>
@@ -2539,23 +2555,34 @@ $('wpEditBtn').onclick=()=>{ wpEdit=!wpEdit; renderWallpapers(); };
 /* ===================== SETTINGS ===================== */
 $('swAuto').onclick=function(){this.classList.toggle('on');S.auto=this.classList.contains('on');save();};
 $('swChime').onclick=function(){this.classList.toggle('on');S.chime=this.classList.contains('on');save(); if(S.chime){ unlockAlarm(); playAlarm('breakEnd'); } else stopAlarm(); };
-$('chimeVol').oninput=e=>{ S.chimeVol=+e.target.value; $('cvVal').textContent=S.chimeVol; };
-$('chimeVol').onchange=()=>{ save(); unlockAlarm(); playAlarm('breakEnd'); };
+/* volume de l'alarme : − / + par pas de 10, plafond 0 et 100 ; je fais entendre le son quand on arrête de cliquer */
+let cvTest=null;
+function setChimeVol(v,preview){ v=Math.max(0,Math.min(100,Math.round(v/10)*10)); S.chimeVol=v;
+  $('cvVal').textContent=v; $('cvMinus').disabled=(v<=0); $('cvPlus').disabled=(v>=100);
+  if(preview){ save(); clearTimeout(cvTest); cvTest=setTimeout(()=>{ unlockAlarm(); if(v>0) playAlarm('breakEnd'); else stopAlarm(); },450); } }
+$('cvMinus').onclick=()=>setChimeVol((+S.chimeVol||0)-10,true);
+$('cvPlus').onclick=()=>setChimeVol((+S.chimeVol||0)+10,true);
 $('testAlarm').onclick=async function(){ unlockAlarm();
   if(S.chime) playAlarm('focusEnd'); else flash('Le son de fin de session est coup\u00e9');
   if(navigator.vibrate){ try{ navigator.vibrate([300,120,300,120,500]); }catch(e){} }
   if(S.notif){ const ok=await showSysNotif('\ud83d\udd14 Test Cocon','Voil\u00e0 \u00e0 quoi ressemblera la fin de ta session'); if(!ok) flash('Notif bloqu\u00e9e par le navigateur'); }
   else flash('Active \u00ab Notifications \u00bb pour recevoir aussi la notif'); };
 $('swNotif').onclick=async function(){ if(!this.classList.contains('on')){ if(!('Notification' in window)){ flash('Notifications non support\u00e9es ici'); return; } let perm=Notification.permission; if(perm==='default'){ try{ perm=await Notification.requestPermission(); }catch(e){} } if(perm!=='granted'){ flash('Autorise les notifications dans ton navigateur'); return; } this.classList.add('on'); S.notif=true; save(); unlockAlarm(); showSysNotif('\u2705 Notifications activ\u00e9es','Tu seras pr\u00e9venu \u00e0 la fin de chaque session'); } else { this.classList.remove('on'); S.notif=false; save(); } };
-$('longEvery').oninput=e=>{$('leVal').textContent=e.target.value;S.longEvery=+e.target.value;save();
-  /* je redessine tout de suite les points, "Session x/y" et le mini-chrono avec le nouveau réglage */
-  renderCycle(); if(typeof miniSync==='function') miniSync(); };
+/* pause longue : pastilles 2 à 8 (le plafond est dans la liste), un appui suffit */
+const LE_MIN=2, LE_MAX=8;
+(function(){ let h=''; for(let n=LE_MIN;n<=LE_MAX;n++) h+='<button type="button" role="radio" data-n="'+n+'">'+n+'</button>'; $('leChips').innerHTML=h; })();
+function setLongEvery(n,user){ n=Math.max(LE_MIN,Math.min(LE_MAX,+n||4)); S.longEvery=n; $('leVal').textContent=n;
+  $('leChips').querySelectorAll('button').forEach(b=>{ const on=(+b.dataset.n===n); b.classList.toggle('on',on); b.setAttribute('aria-checked',on); });
+  if(user){ save(); }
+  /* je redessine tout de suite les points, "Session x/y" et le mini-chrono */
+  renderCycle(); if(typeof miniSync==='function') miniSync(); }
+$('leChips').onclick=e=>{ const b=e.target.closest('button[data-n]'); if(b) setLongEvery(+b.dataset.n,true); };
 $('clearRoom').onclick=async ()=>{ if(!confirm('Vider la salle ? Tâches, chat, réglages et fonds seront effacés.'))return;
   if(idbOK){ for(const w of (S.wallpapers||[])){ if(w.type==='img'){ try{await IDB.del(w.id);}catch(e){} } } } wpData={};
   S=JSON.parse(JSON.stringify(DEF)); save(); applyActiveBg(); renderWallpapers(); hideSpot(); document.body.dataset.yt='off'; if(ytPlayer&&ytReady)try{ytPlayer.stopVideo();}catch(e){}
   $('roomName').value=''; $('tomCount').textContent='0'; focusDone=0; S.cycle=0; $('nowIco').textContent='🎧'; if($('nowIco'))$('nowIco').classList.remove('playable'); $('mediaInput').value=''; if($('ytVolBtn'))$('ytVolBtn').style.display='none'; if($('ytVolPop'))$('ytVolPop').style.display='none'; if(typeof ytPlayer!=='undefined'&&ytPlayer&&ytReady)try{ytPlayer.stopVideo();}catch(e){} document.body.dataset.yt='off';
   $('dF').value=25;$('dS').value=5;$('dL').value=15; $('bgUrl').value='';
-  $('swAuto').classList.remove('on');$('swChime').classList.add('on');$('chimeVol').value=80;$('cvVal').textContent='80';$('longEvery').value=4;$('leVal').textContent='4'; renderCycle();
+  $('swAuto').classList.remove('on');$('swChime').classList.add('on');setChimeVol(80,false); setLongEvery(4,false);
   document.querySelectorAll('.amb.on').forEach(b=>b.classList.remove('on'));
   Object.values(ambNodes).forEach(n=>{if(n.on){n.on=false;n.g.gain.setTargetAtTime(0,ctx().currentTime,.2);}});
   renderTasks(); renderChat(); setMode('focus'); if(typeof miniApply==='function')miniApply(); if(typeof miniTasksApply==='function')miniTasksApply(); flash('Salle réinitialisée'); };
@@ -2729,8 +2756,8 @@ async function fillUI(){
   $('roomName').value=S.roomName||''; $('tomCount').textContent=(+S.tomDay||0);
   $('ambVol').value=S.ambVol; $('ytVol').value=S.ytVol; if($('mediaVol'))$('mediaVol').value=S.ytVol; if($('radioVol'))$('radioVol').value=(S.radioVol!=null?S.radioVol:60);
   $('dF').value=S.dur.focus;$('dS').value=S.dur.short;$('dL').value=S.dur.long;
-  $('longEvery').value=S.longEvery;$('leVal').textContent=S.longEvery;
-  $('swAuto').classList.toggle('on',S.auto);$('swChime').classList.toggle('on',S.chime); if(S.chimeVol==null)S.chimeVol=80; $('chimeVol').value=S.chimeVol; $('cvVal').textContent=S.chimeVol;
+  setLongEvery(S.longEvery,false);
+  $('swAuto').classList.toggle('on',S.auto);$('swChime').classList.toggle('on',S.chime); if(S.chimeVol==null)S.chimeVol=80; setChimeVol(S.chimeVol,false);
   if(S.notif && !(('Notification' in window) && Notification.permission==='granted')) S.notif=false;
   $('swNotif').classList.toggle('on',S.notif);
   await loadWallpaperData(); await applyActiveBg(); renderWallpapers();
