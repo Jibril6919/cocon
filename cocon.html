@@ -2547,13 +2547,15 @@ $('testAlarm').onclick=async function(){ unlockAlarm();
   if(S.notif){ const ok=await showSysNotif('\ud83d\udd14 Test Cocon','Voil\u00e0 \u00e0 quoi ressemblera la fin de ta session'); if(!ok) flash('Notif bloqu\u00e9e par le navigateur'); }
   else flash('Active \u00ab Notifications \u00bb pour recevoir aussi la notif'); };
 $('swNotif').onclick=async function(){ if(!this.classList.contains('on')){ if(!('Notification' in window)){ flash('Notifications non support\u00e9es ici'); return; } let perm=Notification.permission; if(perm==='default'){ try{ perm=await Notification.requestPermission(); }catch(e){} } if(perm!=='granted'){ flash('Autorise les notifications dans ton navigateur'); return; } this.classList.add('on'); S.notif=true; save(); unlockAlarm(); showSysNotif('\u2705 Notifications activ\u00e9es','Tu seras pr\u00e9venu \u00e0 la fin de chaque session'); } else { this.classList.remove('on'); S.notif=false; save(); } };
-$('longEvery').oninput=e=>{$('leVal').textContent=e.target.value;S.longEvery=+e.target.value;save();};
+$('longEvery').oninput=e=>{$('leVal').textContent=e.target.value;S.longEvery=+e.target.value;save();
+  /* je redessine tout de suite les points, "Session x/y" et le mini-chrono avec le nouveau réglage */
+  renderCycle(); if(typeof miniSync==='function') miniSync(); };
 $('clearRoom').onclick=async ()=>{ if(!confirm('Vider la salle ? Tâches, chat, réglages et fonds seront effacés.'))return;
   if(idbOK){ for(const w of (S.wallpapers||[])){ if(w.type==='img'){ try{await IDB.del(w.id);}catch(e){} } } } wpData={};
   S=JSON.parse(JSON.stringify(DEF)); save(); applyActiveBg(); renderWallpapers(); hideSpot(); document.body.dataset.yt='off'; if(ytPlayer&&ytReady)try{ytPlayer.stopVideo();}catch(e){}
   $('roomName').value=''; $('tomCount').textContent='0'; focusDone=0; S.cycle=0; $('nowIco').textContent='🎧'; if($('nowIco'))$('nowIco').classList.remove('playable'); $('mediaInput').value=''; if($('ytVolBtn'))$('ytVolBtn').style.display='none'; if($('ytVolPop'))$('ytVolPop').style.display='none'; if(typeof ytPlayer!=='undefined'&&ytPlayer&&ytReady)try{ytPlayer.stopVideo();}catch(e){} document.body.dataset.yt='off';
   $('dF').value=25;$('dS').value=5;$('dL').value=15; $('bgUrl').value='';
-  $('swAuto').classList.remove('on');$('swChime').classList.add('on');$('chimeVol').value=80;$('cvVal').textContent='80';$('longEvery').value=4;$('leVal').textContent='4';
+  $('swAuto').classList.remove('on');$('swChime').classList.add('on');$('chimeVol').value=80;$('cvVal').textContent='80';$('longEvery').value=4;$('leVal').textContent='4'; renderCycle();
   document.querySelectorAll('.amb.on').forEach(b=>b.classList.remove('on'));
   Object.values(ambNodes).forEach(n=>{if(n.on){n.on=false;n.g.gain.setTargetAtTime(0,ctx().currentTime,.2);}});
   renderTasks(); renderChat(); setMode('focus'); if(typeof miniApply==='function')miniApply(); if(typeof miniTasksApply==='function')miniTasksApply(); flash('Salle réinitialisée'); };
