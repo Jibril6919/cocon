@@ -187,6 +187,10 @@
   .chips button{flex:1;min-width:0;height:36px;border-radius:10px;border:1px solid rgba(243,233,218,.16);background:rgba(243,233,218,.05);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;}
   .chips button:hover{background:rgba(243,233,218,.12);}
   .chips button.on{background:var(--peach);color:#1a1424;border-color:transparent;}
+  .chips button.le-off{flex:1.6;font-size:12.5px;}
+  /* pause longue desactivee : je cache le bouton « Longue » et sa duree, ils ne servent plus a rien */
+  body[data-nolong="1"] .pomo-modes button[data-m="long"]{display:none;}
+  body[data-nolong="1"] #cfgLong{display:none;}
   #pomoFollowNote{display:none;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.5;margin-top:14px;padding:11px;background:rgba(243,233,218,.05);border:1px solid var(--line);border-radius:12px;}
   body[data-follow="1"] #pomoFollowNote{display:block;}
   body[data-follow="1"] .pk-tabs,body[data-follow="1"] .pomo-modes,body[data-follow="1"] .pomo-ctl,body[data-follow="1"] .pomo-cfg,body[data-follow="1"] .pomo-opts{display:none!important;}
@@ -840,7 +844,7 @@
   <div class="pomo-cfg" id="pomoCfg">
     <div class="cfg"><small>Focus</small><input type="number" id="dF" min="1" max="120" value="25"/></div>
     <div class="cfg"><small>Pause</small><input type="number" id="dS" min="1" max="60" value="5"/></div>
-    <div class="cfg"><small>Longue</small><input type="number" id="dL" min="1" max="60" value="15"/></div>
+    <div class="cfg" id="cfgLong"><small>Longue</small><input type="number" id="dL" min="1" max="60" value="15"/></div>
   </div>
   <div class="tm-cfg" id="timerCfg">
     <div class="tm-chips" id="tmChips">
@@ -865,7 +869,7 @@
     </div>
     <button class="mini-toggle" id="testAlarm" type="button">🔔 Tester l'alarme et la notif</button>
     <div class="le-row" id="optLong">
-      <div class="le-top"><span>Pause longue</span><span class="le-num">toutes les <b id="leVal">4</b> sessions</span></div>
+      <div class="le-top"><span>Pause longue</span><span class="le-num" id="leNum">toutes les <b id="leVal">4</b> sessions</span></div>
       <div class="chips" id="leChips" role="radiogroup" aria-label="Pause longue toutes les X sessions"></div>
     </div>
   </div>
@@ -1387,7 +1391,10 @@ function notifyCycle(ended,next){
 const CYCLE_IDLE_MS=60*60*1000;   /* absent plus d'1 h -> nouveau cycle */
 function touchCycle(){ S.cycleTs=Date.now(); }
 function renderCycle(){ const box=$('pCycle'); if(!box) return;
-  const every=+S.longEvery||4, c=+S.cycle||0; let h='';
+  const every=longEveryN(), c=+S.cycle||0; let h='';
+  if(!every){ $('cycDots').innerHTML='';
+    $('cycTxt').textContent = mode==='focus' ? ('Session '+(c+1)) : (c+' faite'+(c>1?'s':''));
+    $('cycReset').style.display=(c>0)?'':'none'; return; }
   for(let i=0;i<every;i++){ const cls=(i<c)?'done':((i===c && mode==='focus')?'cur':''); h+='<i class="'+cls+'"></i>'; }
   $('cycDots').innerHTML=h;
   $('cycTxt').textContent = (mode==='long') ? 'Grande pause \ud83c\udf19'
@@ -1445,7 +1452,9 @@ function setRevMin(v){ v=Math.max(1,Math.min(600,parseInt(v)||60)); S.revMin=v; 
   if(pKind==='timer'){
     if(running) flash('Nouvelle dur\u00e9e : '+fmtRev(v)+' (appliqu\u00e9e au prochain \u21ba)');
     else { total=v*60; remaining=total; render(); broadcastPomo(); } } }
-function nextBreak(){ return ((+S.cycle||0) >= (+S.longEvery||4)) ? 'long' : 'short'; }
+/* S.longEvery = 0 -> pause longue desactivee : toujours la petite pause */
+function longEveryN(){ const n=S.longEvery; return (n===0||n==='0') ? 0 : (+n||4); }
+function nextBreak(){ const e=longEveryN(); return (e && (+S.cycle||0) >= e) ? 'long' : 'short'; }
 function pComplete(skipped){
   const left=(running&&endAt)?Math.max(0,Math.round((endAt-Date.now())/1000)):remaining;
   clearInterval(ticker); ticker=null; clearTimeout(endTimer); endTimer=null;
@@ -1936,8 +1945,8 @@ function miniSync(){ const el=$('miniTimer'); if(!el||!el.classList.contains('on
   const tm=$('mtTom');
   if(tm){ const chrono=(typeof pKind!=='undefined'&&pKind!=='pomo');
     tm.style.display=chrono?'none':'';
-    if(!chrono){ const n=+S.tomDay||0, every=+S.longEvery||4, c=+S.cycle||0;
-      tm.textContent='🍅 '+n+' \u00b7 '+Math.min(c+(mode==='focus'?1:0),every)+'/'+every; } }
+    if(!chrono){ const n=+S.tomDay||0, every=longEveryN(), c=+S.cycle||0;
+      tm.textContent=every ? ('🍅 '+n+' \u00b7 '+Math.min(c+(mode==='focus'?1:0),every)+'/'+every) : ('🍅 '+n); } }
   if($('mtPlayI')) $('mtPlayI').innerHTML=(typeof running!=='undefined'&&running)
     ? '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>' : '<path d="M8 5v14l11-7z"/>'; }
 function miniApply(){ const el=$('miniTimer'); if(!el)return;
@@ -2661,8 +2670,12 @@ $('testAlarm').onclick=async function(){ unlockAlarm();
 $('swNotif').onclick=async function(){ if(!this.classList.contains('on')){ if(!('Notification' in window)){ flash('Notifications non support\u00e9es ici'); return; } let perm=Notification.permission; if(perm==='default'){ try{ perm=await Notification.requestPermission(); }catch(e){} } if(perm!=='granted'){ flash('Autorise les notifications dans ton navigateur'); return; } this.classList.add('on'); S.notif=true; save(); unlockAlarm(); showSysNotif('\u2705 Notifications activ\u00e9es','Tu seras pr\u00e9venu \u00e0 la fin de chaque session'); } else { this.classList.remove('on'); S.notif=false; save(); } };
 /* pause longue : pastilles 2 à 8 (le plafond est dans la liste), un appui suffit */
 const LE_MIN=2, LE_MAX=8;
-(function(){ let h=''; for(let n=LE_MIN;n<=LE_MAX;n++) h+='<button type="button" role="radio" data-n="'+n+'">'+n+'</button>'; $('leChips').innerHTML=h; })();
-function setLongEvery(n,user){ n=Math.max(LE_MIN,Math.min(LE_MAX,+n||4)); S.longEvery=n; $('leVal').textContent=n;
+(function(){ let h='<button type="button" role="radio" class="le-off" data-n="0">Aucune</button>'; for(let n=LE_MIN;n<=LE_MAX;n++) h+='<button type="button" role="radio" data-n="'+n+'">'+n+'</button>'; $('leChips').innerHTML=h; })();
+function setLongEvery(n,user){ n=(n===0||n==='0') ? 0 : Math.max(LE_MIN,Math.min(LE_MAX,+n||4)); S.longEvery=n;
+  if($('leNum')) $('leNum').innerHTML = n ? 'toutes les <b id="leVal">'+n+'</b> sessions' : '<b id="leVal">d\u00e9sactiv\u00e9e</b>';
+  document.body.dataset.nolong = n ? '' : '1';
+  /* si j'etais sur « Longue » a l'arret, je repasse en focus */
+  if(!n && mode==='long' && !running && !classFollower) setMode('focus');
   $('leChips').querySelectorAll('button').forEach(b=>{ const on=(+b.dataset.n===n); b.classList.toggle('on',on); b.setAttribute('aria-checked',on); });
   if(user){ save(); }
   /* je redessine tout de suite les points, "Session x/y" et le mini-chrono */
