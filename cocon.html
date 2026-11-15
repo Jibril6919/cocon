@@ -35,6 +35,10 @@
   #rainC{position:absolute;inset:0;opacity:.4;}
   #imgBg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1s ease;}
   body[data-img="on"] #imgBg{opacity:1;}
+  /* fenetre etroite (moitie d'ecran...) : je montre l'image entiere par-dessus une copie floutee qui remplit les bords */
+  #imgBgBlur{position:absolute;inset:-60px;background-size:cover;background-position:center;filter:blur(30px) brightness(.55);opacity:0;transition:opacity 1s ease;}
+  body[data-img="on"][data-imgfit="contain"] #imgBgBlur{opacity:1;}
+  body[data-imgfit="contain"] #imgBg{background-size:contain;background-repeat:no-repeat;}
   body[data-img="on"] .scene{opacity:.25;}
   #ytWrap{position:absolute;inset:0;opacity:0;transition:opacity 1s ease;pointer-events:none;}
   body[data-yt="on"] #ytWrap{opacity:0;}
@@ -725,7 +729,7 @@
   <div class="scene">
     <div class="sky"></div><div class="sun"></div><div class="stars" id="stars"></div><canvas id="rainC"></canvas>
   </div>
-  <div id="imgBg"></div>
+  <div id="imgBgBlur"></div><div id="imgBg"></div>
   <div id="ytWrap"><div id="ytFrame"></div></div>
     <div id="ytBgWrap"><div id="ytBgFrame"></div><video id="vidBgEl" playsinline muted loop preload="auto"></video></div>
   <div class="overlay-dark"></div>
@@ -2497,7 +2501,20 @@ if($('clsBgDl')) $('clsBgDl').onclick=downloadClassBg;
 renderMyClasses();
 
 /* ===================== BACKGROUND (fix import mobile) ===================== */
-function applyImg(data){ if(data){ $('imgBg').style.backgroundImage=`url("${data}")`; document.body.dataset.img='on'; } else { $('imgBg').style.backgroundImage=''; document.body.dataset.img='off'; } }
+let imgRatio=0, imgRatioSrc='';
+/* je compare la forme de la fenetre a celle de l'image : si "cover" en couperait plus d'un quart, je passe en "contain" */
+function updateImgFit(){ const W=innerWidth||1, H=innerHeight||1; let fit='cover';
+  if(imgRatio>0){ const win=W/H; const kept=Math.min(win/imgRatio, imgRatio/win); if(kept<0.75) fit='contain'; }
+  document.body.dataset.imgfit=fit; }
+function applyImg(data){ const css=data?`url("${data}")`:'';
+  $('imgBg').style.backgroundImage=css; if($('imgBgBlur')) $('imgBgBlur').style.backgroundImage=css;
+  document.body.dataset.img=data?'on':'off';
+  if(!data){ imgRatio=0; imgRatioSrc=''; updateImgFit(); return; }
+  if(imgRatioSrc===data){ updateImgFit(); return; }
+  imgRatioSrc=data; imgRatio=0; updateImgFit();
+  const im=new Image(); im.onload=()=>{ if(imgRatioSrc!==data) return; const w=im.naturalWidth, h=im.naturalHeight; imgRatio=(w&&h)?w/h:0; updateImgFit(); }; im.src=data; }
+addEventListener('resize',updateImgFit);
+if(window.visualViewport) visualViewport.addEventListener('resize',updateImgFit);
 function readFileDataURL(file){ return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>rej(fr.error||new Error('read')); fr.readAsDataURL(file); }); }
 function compressDataURL(dataURL){ return new Promise((res)=>{ const img=new Image();
   img.onload=()=>{ try{ const max=1600; let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height; if(!w||!h){return res(dataURL);} if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);} const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h); res(cv.toDataURL('image/jpeg',.82)); }catch(e){ res(dataURL); } };
@@ -2521,6 +2538,38 @@ const IDB={ db:null,
 };
 async function wpPut(id,data){ if(idbOK){ try{ await IDB.set(id,data); wpData[id]=data; return {}; }catch(e){ idbOK=false; } } return {inline:data}; }
 async function loadWallpaperData(){ wpData={}; for(const w of (S.wallpapers||[])){ if(w.type==='img' && !w.inline && idbOK){ try{ const d=await IDB.get(w.id); if(d) wpData[w.id]=d; }catch(e){ idbOK=false; } } } }
+/* ----- synchro cloud des fonds importes : l'image va dans le stockage Supabase, la liste suit la salle ----- */
+const WP_DIR='wp';
+function wpCloudPath(id){ return WP_DIR+'/'+cloudUser.id+'/'+id+'.jpg'; }
+let wpUpWarned=false;
+async function wpCloudUp(item,data){ if(!isCloud()||!item||!data||String(data).slice(0,5)!=='data:') return false;
+  const path=wpCloudPath(item.id);
+  try{ const blob=await (await fetch(data)).blob();
+    const go=()=>fetch(SB_URL+'/storage/v1/object/'+CHAT_BK+'/'+path,{method:'POST',headers:Object.assign({apikey:SB_KEY,'x-upsert':'true','Content-Type':blob.type||'image/jpeg'},authHeaders()),body:blob});
+    let r=await go(); if(r.status===401&&await authRefresh()) r=await go();
+    if(!r.ok) throw new Error('up '+r.status);
+    item.cp=path; save(); return true;
+  }catch(e){ console.warn('wp upload',e); if(!wpUpWarned){ wpUpWarned=true; flash('Fond gard\u00e9 sur cet appareil seulement (envoi cloud impossible)'); } return false; } }
+async function wpCloudDown(item){ if(!isCloud()||!item||!item.cp) return null;
+  try{ const url=await attSignedUrl(item.cp); if(!url) return null;
+    const r=await fetch(url); if(!r.ok) return null; const blob=await r.blob();
+    const data=await readFileDataURL(blob);
+    if(idbOK){ try{ await IDB.set(item.id,data); }catch(e){} }
+    wpData[item.id]=data; return data; }catch(e){ console.warn('wp download',e); return null; } }
+function wpCloudDel(item){ if(!isCloud()||!item||!item.cp) return;
+  try{ fetch(SB_URL+'/storage/v1/object/'+CHAT_BK+'/'+item.cp,{method:'DELETE',headers:Object.assign({apikey:SB_KEY},authHeaders())}).catch(()=>{}); }catch(e){} }
+/* au demarrage : je recupere les fonds qui manquent sur ce navigateur, et j'envoie ceux qui ne sont pas encore dans le cloud */
+let wpSyncRun=0;
+async function wpCloudSync(){ if(!isCloud()) return; const run=++wpSyncRun; const uid=cloudUser.id;
+  const list=(S.wallpapers||[]).filter(w=>w.type==='img');
+  let got=false;
+  await Promise.all(list.map(async w=>{
+    const have=wpData[w.id]||w.inline;
+    if(!have && w.cp){ if(await wpCloudDown(w)) got=true; }
+    else if(have && !w.cp){ await wpCloudUp(w,have); }
+  }));
+  if(run!==wpSyncRun||!isCloud()||cloudUser.id!==uid) return;
+  if(got){ if(!(typeof classBgOn!=='undefined'&&classBgOn)) applyActiveBg(); renderWallpapers(); } }
 function wpSrc(w){ return w.type==='url' ? w.src : (wpData[w.id]||w.inline||''); }
 async function applyActiveBg(){ const id=S.bgActive; if(!id){ applyImg(''); return; } const w=(S.wallpapers||[]).find(x=>x.id===id); applyImg(w?wpSrc(w):''); }
 function selectWallpaper(id){ S.bgActive=id; save(); applyActiveBg(); renderWallpapers(); if(typeof clearVidForBg==='function') clearVidForBg(); if(typeof syncClassBgFromMine==='function')syncClassBgFromMine(); }
@@ -2529,9 +2578,10 @@ function imgResize(src,max,q){ return new Promise(res=>{ const im=new Image(); i
 async function bgCoverThumb(){ const src=currentBgImage(); if(!src) return {cover:null,thumb:null}; if(src.slice(0,5)!=='data:') return {cover:src,thumb:src}; const cover=await imgResize(src,1100,.8); const thumb=await imgResize(src,240,.7); return {cover:cover,thumb:thumb}; }
 async function syncClassBgFromMine(){ if(!(typeof inClass!=='undefined'&&inClass&&classCreator&&classCode))return; const ct=await bgCoverThumb(); classBgData=ct.cover; try{ await sbAuth('/rest/v1/classes?code=eq.'+encodeURIComponent(classCode),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({cover:ct.cover,thumb:ct.thumb})}); }catch(e){} if(classCh){ try{ classCh.send({type:'broadcast',event:'classbg',payload:{}}); }catch(e){} } if(typeof updateClassBgBtns==='function')updateClassBgBtns(); }
 async function addImgWallpaper(dataURL){ const id='w'+Date.now(); const extra=await wpPut(id,dataURL); const item=Object.assign({type:'img',id},extra);
-  S.wallpapers=S.wallpapers||[]; S.wallpapers.push(item); S.bgActive=id; save(); await applyActiveBg(); renderWallpapers(); if(typeof syncClassBgFromMine==='function')syncClassBgFromMine(); flash('Fond ajouté 🖼️'); }
+  S.wallpapers=S.wallpapers||[]; S.wallpapers.push(item); S.bgActive=id; save(); await applyActiveBg(); renderWallpapers(); if(typeof syncClassBgFromMine==='function')syncClassBgFromMine(); flash('Fond ajouté 🖼️');
+  if(!item.inline) wpCloudUp(item,dataURL); }
 function addUrlWallpaper(url){ const id='w'+Date.now(); S.wallpapers=S.wallpapers||[]; S.wallpapers.push({type:'url',id,src:url}); S.bgActive=id; save(); applyActiveBg(); renderWallpapers(); if(typeof syncClassBgFromMine==='function')syncClassBgFromMine(); flash('Fond ajouté 🌄'); }
-async function deleteWallpaper(id){ S.wallpapers=(S.wallpapers||[]).filter(w=>w.id!==id); if(S.bgActive===id)S.bgActive=''; delete wpData[id]; if(idbOK){try{await IDB.del(id);}catch(e){}} save(); await applyActiveBg(); renderWallpapers(); }
+async function deleteWallpaper(id){ wpCloudDel((S.wallpapers||[]).find(w=>w.id===id)); S.wallpapers=(S.wallpapers||[]).filter(w=>w.id!==id); if(S.bgActive===id)S.bgActive=''; delete wpData[id]; if(idbOK){try{await IDB.del(id);}catch(e){}} save(); await applyActiveBg(); renderWallpapers(); }
 async function migrateBg(){ if(Array.isArray(S.wallpapers)){ if(typeof S.bgActive==='undefined')S.bgActive=''; return; }
   S.wallpapers=[]; S.bgActive='';
   if(S.bg){ const id='w'+Date.now(); if(String(S.bg).startsWith('data:')){ const extra=await wpPut(id,S.bg); S.wallpapers.push(Object.assign({type:'img',id},extra)); } else { S.wallpapers.push({type:'url',id,src:S.bg}); } S.bgActive=id; }
@@ -2578,6 +2628,7 @@ function setLongEvery(n,user){ n=Math.max(LE_MIN,Math.min(LE_MAX,+n||4)); S.long
   renderCycle(); if(typeof miniSync==='function') miniSync(); }
 $('leChips').onclick=e=>{ const b=e.target.closest('button[data-n]'); if(b) setLongEvery(+b.dataset.n,true); };
 $('clearRoom').onclick=async ()=>{ if(!confirm('Vider la salle ? Tâches, chat, réglages et fonds seront effacés.'))return;
+  for(const w of (S.wallpapers||[])){ if(w.type==='img') wpCloudDel(w); }
   if(idbOK){ for(const w of (S.wallpapers||[])){ if(w.type==='img'){ try{await IDB.del(w.id);}catch(e){} } } } wpData={};
   S=JSON.parse(JSON.stringify(DEF)); save(); applyActiveBg(); renderWallpapers(); hideSpot(); document.body.dataset.yt='off'; if(ytPlayer&&ytReady)try{ytPlayer.stopVideo();}catch(e){}
   $('roomName').value=''; $('tomCount').textContent='0'; focusDone=0; S.cycle=0; $('nowIco').textContent='🎧'; if($('nowIco'))$('nowIco').classList.remove('playable'); $('mediaInput').value=''; if($('ytVolBtn'))$('ytVolBtn').style.display='none'; if($('ytVolPop'))$('ytVolPop').style.display='none'; if(typeof ytPlayer!=='undefined'&&ytPlayer&&ytReady)try{ytPlayer.stopVideo();}catch(e){} document.body.dataset.yt='off';
@@ -2760,7 +2811,7 @@ async function fillUI(){
   $('swAuto').classList.toggle('on',S.auto);$('swChime').classList.toggle('on',S.chime); if(S.chimeVol==null)S.chimeVol=80; setChimeVol(S.chimeVol,false);
   if(S.notif && !(('Notification' in window) && Notification.permission==='granted')) S.notif=false;
   $('swNotif').classList.toggle('on',S.notif);
-  await loadWallpaperData(); await applyActiveBg(); renderWallpapers();
+  await loadWallpaperData(); await applyActiveBg(); renderWallpapers(); wpCloudSync();
   if(S.media && ytId(S.media)){ $('mediaInput').value=S.media; $('nowIco').textContent='▶️'; $('nowIco').classList.add('playable'); if($('mediaClear'))$('mediaClear').style.display=''; } else { S.media=''; $('mediaInput').value=''; $('nowIco').textContent='🎧'; }
   renderTasks(); renderChat(); setMode('focus'); dayRollover(); checkIdleCycle();
   if(typeof miniTasksApply==='function') miniTasksApply();
