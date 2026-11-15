@@ -35,10 +35,6 @@
   #rainC{position:absolute;inset:0;opacity:.4;}
   #imgBg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1s ease;}
   body[data-img="on"] #imgBg{opacity:1;}
-  /* fenetre etroite (moitie d'ecran...) : je montre l'image entiere par-dessus une copie floutee qui remplit les bords */
-  #imgBgBlur{position:absolute;inset:-60px;background-size:cover;background-position:center;filter:blur(30px) brightness(.55);opacity:0;transition:opacity 1s ease;}
-  body[data-img="on"][data-imgfit="contain"] #imgBgBlur{opacity:1;}
-  body[data-imgfit="contain"] #imgBg{background-size:contain;background-repeat:no-repeat;}
   body[data-img="on"] .scene{opacity:.25;}
   #ytWrap{position:absolute;inset:0;opacity:0;transition:opacity 1s ease;pointer-events:none;}
   body[data-yt="on"] #ytWrap{opacity:0;}
@@ -623,6 +619,28 @@
     width:min(330px,calc(100vw - 90px));max-height:min(74vh,560px);border:1px solid var(--line);border-radius:20px;
     padding:16px;background:rgba(20,15,30,.9);box-shadow:0 20px 60px -15px rgba(0,0,0,.6);}
   .dock{z-index:70;}
+  /* ===== ADAPTATION A TOUTES LES TAILLES DE FENETRE ===== */
+  /* dans un panneau, le contenu ne s'ecrase jamais : c'est le panneau qui defile */
+  .panel>*{flex-shrink:0;}
+  /* le dock ne deborde jamais de la fenetre : il defile si besoin */
+  .dock{max-height:calc(100% - 120px);overflow-y:auto;scrollbar-width:none;}
+  .dock::-webkit-scrollbar{display:none;}
+  @media(min-width:641px){
+    /* fenetres plein ecran : le contenu ne passe jamais sous le dock de droite */
+    .panel:not(.panel-sm){padding-right:max(96px,calc(50vw - 330px));}
+  }
+  @media(min-width:641px) and (max-height:620px){
+    /* fenetre basse (moitie d'ecran en hauteur, petit portable) : dock plus compact */
+    .dock{gap:4px;padding:6px;border-radius:15px;}
+    .dbtn{width:38px;height:38px;border-radius:11px;}
+    .dbtn svg{width:18px;height:18px;}
+    .dbtn .lab{right:46px;}
+  }
+  @media(max-width:640px){
+    /* telephone / fenetre tres etroite : on peut faire defiler jusqu'en bas sans que le dock cache la fin */
+    .panel:not(.panel-sm){padding-bottom:calc(env(safe-area-inset-bottom,0px) + 150px);}
+    .dock{max-height:none;overflow-y:visible;}
+  }
   body[data-win="1"] .panel-x{display:none;}
   body[data-win="1"] .cls-pill,body[data-win="1"] .mic-pill{display:none!important;}
   #winBar{position:fixed;top:0;left:0;right:0;z-index:80;display:none;align-items:center;gap:10px;
@@ -729,7 +747,7 @@
   <div class="scene">
     <div class="sky"></div><div class="sun"></div><div class="stars" id="stars"></div><canvas id="rainC"></canvas>
   </div>
-  <div id="imgBgBlur"></div><div id="imgBg"></div>
+  <div id="imgBg"></div>
   <div id="ytWrap"><div id="ytFrame"></div></div>
     <div id="ytBgWrap"><div id="ytBgFrame"></div><video id="vidBgEl" playsinline muted loop preload="auto"></video></div>
   <div class="overlay-dark"></div>
@@ -910,7 +928,7 @@
   <div class="bgrow" style="margin-top:9px"><input type="text" id="bgUrl" placeholder="…ou colle un lien d'image"/><button class="bsm" id="bgApply">Ajouter</button></div>
   <input type="file" id="bgFile" accept="image/*" hidden/>
   <div class="wp-grid" id="wpGrid"></div>
-  <p class="hint">Sur mobile : choisis une photo de ta galerie. Les fonds sont gardés sur l'appareil ; « Modifier » pour en supprimer.</p>
+  <p class="hint">L'image remplit toujours l'écran, recadrée sur son centre d'intérêt. Avec un compte cloud, tes fonds te suivent sur tous tes navigateurs ; « Modifier » pour en supprimer.</p>
   <div class="cls-vid" id="clsVidCtrl" style="display:none">
     <div class="cls-tc-lbl" id="clsVidLbl">🎬 Vidéo de fond</div>
     <div class="cls-vid-row"><input id="clsVidIn" type="text" placeholder="Lien YouTube ou .mp4…" autocomplete="off" spellcheck="false"/><button class="cls-vid-go" id="clsVidGo" type="button">OK</button></div>
@@ -2501,20 +2519,43 @@ if($('clsBgDl')) $('clsBgDl').onclick=downloadClassBg;
 renderMyClasses();
 
 /* ===================== BACKGROUND (fix import mobile) ===================== */
-let imgRatio=0, imgRatioSrc='';
-/* je compare la forme de la fenetre a celle de l'image : si "cover" en couperait plus d'un quart, je passe en "contain" */
-function updateImgFit(){ const W=innerWidth||1, H=innerHeight||1; let fit='cover';
-  if(imgRatio>0){ const win=W/H; const kept=Math.min(win/imgRatio, imgRatio/win); if(kept<0.75) fit='contain'; }
-  document.body.dataset.imgfit=fit; }
-function applyImg(data){ const css=data?`url("${data}")`:'';
-  $('imgBg').style.backgroundImage=css; if($('imgBgBlur')) $('imgBgBlur').style.backgroundImage=css;
-  document.body.dataset.img=data?'on':'off';
-  if(!data){ imgRatio=0; imgRatioSrc=''; updateImgFit(); return; }
-  if(imgRatioSrc===data){ updateImgFit(); return; }
-  imgRatioSrc=data; imgRatio=0; updateImgFit();
-  const im=new Image(); im.onload=()=>{ if(imgRatioSrc!==data) return; const w=im.naturalWidth, h=im.naturalHeight; imgRatio=(w&&h)?w/h:0; updateImgFit(); }; im.src=data; }
-addEventListener('resize',updateImgFit);
-if(window.visualViewport) visualViewport.addEventListener('resize',updateImgFit);
+/* Recadrage intelligent : l'image remplit toujours la fenetre (jamais etiree, jamais de bandes).
+   Je cherche le "centre d'interet" de l'image (zones nettes et colorees) et je garde ce point au milieu
+   quand la fenetre coupe l'image (moitie d'ecran, telephone, ecran ultra-large...). */
+let imgMeta={src:'',w:0,h:0,fx:.5,fy:.5};
+function imgFocus(im){ try{ const N=64; const r=im.naturalWidth/im.naturalHeight; const cw=r>=1?N:Math.max(8,Math.round(N*r)), ch=r>=1?Math.max(8,Math.round(N/r)):N;
+    const cv=document.createElement('canvas'); cv.width=cw; cv.height=ch; const g=cv.getContext('2d',{willReadFrequently:true}); g.drawImage(im,0,0,cw,ch);
+    const d=g.getImageData(0,0,cw,ch).data; const L=new Float32Array(cw*ch), Sat=new Float32Array(cw*ch);
+    for(let i=0;i<cw*ch;i++){ const R=d[i*4],G=d[i*4+1],B=d[i*4+2]; L[i]=.299*R+.587*G+.114*B; const mx=Math.max(R,G,B),mn=Math.min(R,G,B); Sat[i]=mx?(mx-mn)/mx:0; }
+    let sw=0,sx=0,sy=0;
+    for(let y=1;y<ch-1;y++) for(let x=1;x<cw-1;x++){ const i=y*cw+x;
+      const gx=L[i+1]-L[i-1], gy=L[i+cw]-L[i-cw]; const e=Math.sqrt(gx*gx+gy*gy)*(0.6+Sat[i]);
+      const w=e*e; sw+=w; sx+=w*(x+.5)/cw; sy+=w*(y+.5)/ch; }
+    if(!sw) return {fx:.5,fy:.5};
+    /* je tire un peu vers le centre pour rester sobre, et vers le haut (les sujets sont rarement collés en bas) */
+    const fx=.5+(sx/sw-.5)*.75, fy=.45+(sy/sw-.45)*.75;
+    return {fx:Math.min(.85,Math.max(.15,fx)), fy:Math.min(.85,Math.max(.15,fy))};
+  }catch(e){ return {fx:.5,fy:.45}; } }
+function layoutImg(){ const el=$('imgBg'); if(!el) return; const m=imgMeta;
+  if(!m.src||!m.w||!m.h){ el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; return; }
+  const W=el.clientWidth||innerWidth, H=el.clientHeight||innerHeight;
+  const sc=Math.max(W/m.w,H/m.h); const dw=Math.ceil(m.w*sc), dh=Math.ceil(m.h*sc);
+  const ox=Math.round(Math.min(0,Math.max(W-dw, W/2-m.fx*dw))), oy=Math.round(Math.min(0,Math.max(H-dh, H/2-m.fy*dh)));
+  el.style.backgroundSize=dw+'px '+dh+'px'; el.style.backgroundPosition=ox+'px '+oy+'px'; }
+function applyImg(data){ const el=$('imgBg');
+  el.style.backgroundImage=data?`url("${data}")`:''; document.body.dataset.img=data?'on':'off';
+  if(!data){ imgMeta={src:'',w:0,h:0,fx:.5,fy:.5}; layoutImg(); return; }
+  if(imgMeta.src===data){ layoutImg(); return; }
+  imgMeta={src:data,w:0,h:0,fx:.5,fy:.45}; layoutImg();
+  const im=new Image(); if(data.slice(0,5)!=='data:') im.crossOrigin='anonymous';
+  const done=(f)=>{ if(imgMeta.src!==data) return; imgMeta.w=im.naturalWidth; imgMeta.h=im.naturalHeight; if(f){ imgMeta.fx=f.fx; imgMeta.fy=f.fy; } layoutImg(); };
+  im.onload=()=>done(imgFocus(im));
+  /* lien d'image sans autorisation CORS : je recharge sans analyse, juste pour connaitre la taille */
+  im.onerror=()=>{ if(!im.crossOrigin) return; const im2=new Image(); im2.onload=()=>{ if(imgMeta.src!==data) return; imgMeta.w=im2.naturalWidth; imgMeta.h=im2.naturalHeight; layoutImg(); }; im2.src=data; };
+  im.src=data; }
+let imgLayT=null; function imgRelayout(){ cancelAnimationFrame(imgLayT); imgLayT=requestAnimationFrame(layoutImg); }
+addEventListener('resize',imgRelayout);
+if(window.visualViewport) visualViewport.addEventListener('resize',imgRelayout);
 function readFileDataURL(file){ return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>rej(fr.error||new Error('read')); fr.readAsDataURL(file); }); }
 function compressDataURL(dataURL){ return new Promise((res)=>{ const img=new Image();
   img.onload=()=>{ try{ const max=1600; let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height; if(!w||!h){return res(dataURL);} if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);} const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h); res(cv.toDataURL('image/jpeg',.82)); }catch(e){ res(dataURL); } };
