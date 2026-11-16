@@ -2518,7 +2518,13 @@ if($('navMyClasses')) $('navMyClasses').onclick=()=>{ closeDrawer(); openMyClass
 /* ---- fond partagé de la classe (optionnel + live) ---- */
 let classBgData=null, classBgOn=false;
 function updateClassBgBtns(){ const has=!!classBgData; if($('clsBgBtn')){ $('clsBgBtn').style.display=has?'block':'none'; $('clsBgBtn').textContent=classBgOn?'↩️ Remettre mon fond':'🖼️ Appliquer le fond de la classe'; } if($('clsBgDl')) $('clsBgDl').style.display=has?'block':'none'; }
-async function loadClassBg(){ if(!classCode){ classBgData=null; updateClassBgBtns(); return; } let cov=null; try{ const r=await sbAuth('/rest/v1/classes?code=eq.'+encodeURIComponent(classCode)+'&select=cover'); const a=await r.json().catch(()=>[]); cov=(a&&a[0]&&a[0].cover)||null; }catch(e){} classBgData=cov; if(classBgOn){ if(classBgData) applyImg(classBgData); else { classBgOn=false; if(typeof applyActiveBg==='function') applyActiveBg(); } } updateClassBgBtns(); }
+const classCoverCache={};
+async function classCoverFetch(path){ if(classCoverCache[path]) return classCoverCache[path];
+  try{ const url=await attSignedUrl(path); if(!url) return null; const r=await fetch(url); if(!r.ok) return null;
+    const d=await readFileDataURL(await r.blob()); classCoverCache[path]=d; return d; }catch(e){ return null; } }
+async function loadClassBg(){ if(!classCode){ classBgData=null; updateClassBgBtns(); return; } let cov=null; try{ const r=await sbAuth('/rest/v1/classes?code=eq.'+encodeURIComponent(classCode)+'&select=cover'); const a=await r.json().catch(()=>[]); cov=(a&&a[0]&&a[0].cover)||null; }catch(e){}
+  if(cov && cov.slice(0,3)==='sb:'){ const full=await classCoverFetch(cov.slice(3)); cov=full; }
+  classBgData=cov; if(classBgOn){ if(classBgData) applyImg(classBgData); else { classBgOn=false; if(typeof applyActiveBg==='function') applyActiveBg(); } } updateClassBgBtns(); }
 function toggleClassBg(){ if(!classBgData)return; if(classBgOn){ classBgOn=false; if(typeof applyActiveBg==='function')applyActiveBg(); flash('Ton fond perso est revenu 🌙'); } else { classBgOn=true; applyImg(classBgData); flash('Fond de la classe appliqué 🖼️'); } updateClassBgBtns(); }
 function downloadClassBg(){ if(!classBgData)return; const a=document.createElement('a'); a.href=classBgData; a.download='cocon-fond-'+(classCode||'classe')+'.jpg'; document.body.appendChild(a); a.click(); a.remove(); flash('Image téléchargée ⬇️'); }
 if($('clsBgBtn')) $('clsBgBtn').onclick=toggleClassBg;
@@ -2566,6 +2572,18 @@ let imgLayT=null; function imgRelayout(){ cancelAnimationFrame(imgLayT); imgLayT
 addEventListener('resize',imgRelayout);
 if(window.visualViewport) visualViewport.addEventListener('resize',imgRelayout);
 function readFileDataURL(file){ return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>rej(fr.error||new Error('read')); fr.readAsDataURL(file); }); }
+/* Fonds importes : je garde l'image d'origine (pleine resolution) tant qu'elle reste raisonnable.
+   Au-dela de 4K (3840 px) ou de 12 Mo, je la reduis a 3840 px en haute qualite — toujours plus net que l'ecran. */
+const WP_MAX_PX=3840, WP_KEEP_BYTES=12*1024*1024;
+function wpEncode(cv){ let out=''; try{ out=cv.toDataURL('image/webp',.92); }catch(e){} if(!out||out.slice(0,15)!=='data:image/webp') out=cv.toDataURL('image/jpeg',.92); return out; }
+function prepWallpaper(raw,file){ return new Promise(res=>{ const img=new Image();
+  img.onload=()=>{ try{ const w=img.naturalWidth, h=img.naturalHeight; if(!w||!h) return res(raw);
+      const okType=/^data:image\/(jpeg|png|webp|avif)/i.test(raw);
+      if(okType && Math.max(w,h)<=WP_MAX_PX && (!file||file.size<=WP_KEEP_BYTES)) return res(raw);
+      const r=Math.min(1,WP_MAX_PX/Math.max(w,h)); const cw=Math.round(w*r), ch=Math.round(h*r);
+      const cv=document.createElement('canvas'); cv.width=cw; cv.height=ch; const g=cv.getContext('2d');
+      g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(img,0,0,cw,ch); res(wpEncode(cv)); }catch(e){ res(raw); } };
+  img.onerror=()=>res(raw); img.src=raw; }); }
 function compressDataURL(dataURL){ return new Promise((res)=>{ const img=new Image();
   img.onload=()=>{ try{ const max=1600; let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height; if(!w||!h){return res(dataURL);} if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);} const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h); res(cv.toDataURL('image/jpeg',.82)); }catch(e){ res(dataURL); } };
   img.onerror=()=>res(dataURL); img.src=dataURL; }); }
@@ -2586,7 +2604,9 @@ const IDB={ db:null,
   async get(k){ const db=await this.open(); return new Promise((res,rej)=>{ const t=db.transaction('wp','readonly'); const q=t.objectStore('wp').get(k); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); },
   async del(k){ const db=await this.open(); return new Promise((res,rej)=>{ const t=db.transaction('wp','readwrite'); t.objectStore('wp').delete(k); t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
 };
-async function wpPut(id,data){ if(idbOK){ try{ await IDB.set(id,data); wpData[id]=data; return {}; }catch(e){ idbOK=false; } } return {inline:data}; }
+async function wpPut(id,data){ if(idbOK){ try{ await IDB.set(id,data); wpData[id]=data; return {}; }catch(e){ idbOK=false; } }
+  /* navigateur sans stockage local (ex : navigation privee) : une copie legere voyage avec la salle */
+  const small=(data.length>2_000_000)?await imgResize(data,1920,.86):data; return {inline:small}; }
 async function loadWallpaperData(){ wpData={}; for(const w of (S.wallpapers||[])){ if(w.type==='img' && !w.inline && idbOK){ try{ const d=await IDB.get(w.id); if(d) wpData[w.id]=d; }catch(e){ idbOK=false; } } } }
 /* ----- synchro cloud des fonds importes : l'image va dans le stockage Supabase, la liste suit la salle ----- */
 const WP_DIR='wp';
@@ -2598,7 +2618,9 @@ async function wpCloudUp(item,data){ if(!isCloud()||!item||!data||String(data).s
     const go=()=>fetch(SB_URL+'/storage/v1/object/'+CHAT_BK+'/'+path,{method:'POST',headers:Object.assign({apikey:SB_KEY,'x-upsert':'true','Content-Type':blob.type||'image/jpeg'},authHeaders()),body:blob});
     let r=await go(); if(r.status===401&&await authRefresh()) r=await go();
     if(!r.ok) throw new Error('up '+r.status);
-    item.cp=path; save(); return true;
+    item.cp=path; save();
+    if(item.id===S.bgActive && typeof syncClassBgFromMine==='function') syncClassBgFromMine();
+    return true;
   }catch(e){ console.warn('wp upload',e); if(!wpUpWarned){ wpUpWarned=true; flash('Fond gard\u00e9 sur cet appareil seulement (envoi cloud impossible)'); } return false; } }
 async function wpCloudDown(item){ if(!isCloud()||!item||!item.cp) return null;
   try{ const url=await attSignedUrl(item.cp); if(!url) return null;
@@ -2625,11 +2647,14 @@ async function applyActiveBg(){ const id=S.bgActive; if(!id){ applyImg(''); retu
 function selectWallpaper(id){ S.bgActive=id; save(); applyActiveBg(); renderWallpapers(); if(typeof clearVidForBg==='function') clearVidForBg(); if(typeof syncClassBgFromMine==='function')syncClassBgFromMine(); }
 function currentBgImage(){ try{ const w=(S.wallpapers||[]).find(x=>x.id===S.bgActive); const s=w?wpSrc(w):''; return s||null; }catch(e){ return null; } }
 function imgResize(src,max,q){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{ try{ let w=im.naturalWidth||im.width,h=im.naturalHeight||im.height; if(!w||!h)return res(src); if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);} const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(im,0,0,w,h); res(cv.toDataURL('image/jpeg',q)); }catch(e){ res(src); } }; im.onerror=()=>res(src); im.src=src; }); }
-async function bgCoverThumb(){ const src=currentBgImage(); if(!src) return {cover:null,thumb:null}; if(src.slice(0,5)!=='data:') return {cover:src,thumb:src}; const cover=await imgResize(src,1100,.8); const thumb=await imgResize(src,240,.7); return {cover:cover,thumb:thumb}; }
-async function syncClassBgFromMine(){ if(!(typeof inClass!=='undefined'&&inClass&&classCreator&&classCode))return; const ct=await bgCoverThumb(); classBgData=ct.cover; try{ await sbAuth('/rest/v1/classes?code=eq.'+encodeURIComponent(classCode),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({cover:ct.cover,thumb:ct.thumb})}); }catch(e){} if(classCh){ try{ classCh.send({type:'broadcast',event:'classbg',payload:{}}); }catch(e){} } if(typeof updateClassBgBtns==='function')updateClassBgBtns(); }
+async function bgCoverThumb(){ const src=currentBgImage(); if(!src) return {cover:null,thumb:null}; if(src.slice(0,5)!=='data:') return {cover:src,thumb:src};
+  /* fond deja dans le cloud : la classe pointe vers l'original, les membres le recoivent en pleine resolution */
+  const aw=(S.wallpapers||[]).find(x=>x.id===S.bgActive);
+  const cover=(aw&&aw.cp) ? ('sb:'+aw.cp) : await imgResize(src,1920,.88); const thumb=await imgResize(src,240,.7); return {cover:cover,thumb:thumb}; }
+async function syncClassBgFromMine(){ if(!(typeof inClass!=='undefined'&&inClass&&classCreator&&classCode))return; const ct=await bgCoverThumb(); classBgData=(ct.cover&&ct.cover.slice(0,3)==='sb:')?currentBgImage():ct.cover; try{ await sbAuth('/rest/v1/classes?code=eq.'+encodeURIComponent(classCode),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({cover:ct.cover,thumb:ct.thumb})}); }catch(e){} if(classCh){ try{ classCh.send({type:'broadcast',event:'classbg',payload:{}}); }catch(e){} } if(typeof updateClassBgBtns==='function')updateClassBgBtns(); }
 async function addImgWallpaper(dataURL){ const id='w'+Date.now(); const extra=await wpPut(id,dataURL); const item=Object.assign({type:'img',id},extra);
   S.wallpapers=S.wallpapers||[]; S.wallpapers.push(item); S.bgActive=id; save(); await applyActiveBg(); renderWallpapers(); if(typeof syncClassBgFromMine==='function')syncClassBgFromMine(); flash('Fond ajouté 🖼️');
-  if(!item.inline) wpCloudUp(item,dataURL); }
+  wpCloudUp(item,dataURL); }
 function addUrlWallpaper(url){ const id='w'+Date.now(); S.wallpapers=S.wallpapers||[]; S.wallpapers.push({type:'url',id,src:url}); S.bgActive=id; save(); applyActiveBg(); renderWallpapers(); if(typeof syncClassBgFromMine==='function')syncClassBgFromMine(); flash('Fond ajouté 🌄'); }
 async function deleteWallpaper(id){ wpCloudDel((S.wallpapers||[]).find(w=>w.id===id)); S.wallpapers=(S.wallpapers||[]).filter(w=>w.id!==id); if(S.bgActive===id)S.bgActive=''; delete wpData[id]; if(idbOK){try{await IDB.del(id);}catch(e){}} save(); await applyActiveBg(); renderWallpapers(); }
 async function migrateBg(){ if(Array.isArray(S.wallpapers)){ if(typeof S.bgActive==='undefined')S.bgActive=''; return; }
@@ -2644,8 +2669,8 @@ function renderWallpapers(){ const g=$('wpGrid'); if(!g)return; g.classList.togg
 
 $('bgFileBtn').onclick=()=>$('bgFile').click();
 $('bgFile').onchange=async e=>{ const f=e.target.files&&e.target.files[0]; if(!f)return; flash('Chargement de l\'image…');
-  try{ const raw=await readFileDataURL(f); const out=await compressDataURL(raw);
-    if(out.length>3_500_000){ flash('Image trop lourde après compression'); $('bgFile').value=''; return; }
+  try{ const raw=await readFileDataURL(f); const out=await prepWallpaper(raw,f);
+    if(out.length>26_000_000){ flash('Image trop lourde (max ~18 Mo)'); $('bgFile').value=''; return; }
     await addImgWallpaper(out); $('bgFile').value='';
   }catch(err){ flash('Impossible de lire cette image (format ?)'); $('bgFile').value=''; } };
 $('bgApply').onclick=()=>{ const u=$('bgUrl').value.trim(); if(!u)return; addUrlWallpaper(u); $('bgUrl').value=''; };
